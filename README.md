@@ -3,7 +3,8 @@
 
 插件名称：小半微博心情说说  
 
-<p style="color: green; font-size: 20px;">插件是基于Modown主题开发调试的，对于原版Modown主题的兼容性还行，但是其他主题就不知道了。</p>
+<mark style="background-color: red; color: white;">插件是基于Modown主题开发调试的，对于原版Modown主题的兼容性还行，但是其他主题就不知道了。</mark>
+
 
 插件功能：  
 普通用户发布微博(登录用户)  
