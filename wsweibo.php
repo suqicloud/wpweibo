@@ -1381,9 +1381,22 @@ function ws_weibo_frontend_page() {
 add_shortcode('ws_weibo_feeling', 'ws_weibo_frontend_page');
 
 
-// 处理前台发布微博
+// 允许订阅者和贡献者发布微博
+function ws_weibo_extend_post_capabilities() {
+    if (isset($_POST['ws_weibo_submit'])) {
+        // 检查用户角色
+        $user = wp_get_current_user();
+        $allowed_roles = ['subscriber', 'contributor', 'author', 'editor', 'administrator'];
+        if (array_intersect($allowed_roles, $user->roles)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// 检查逻辑
 function ws_weibo_handle_frontend_post() {
-    if (isset($_POST['ws_weibo_submit']) && current_user_can('publish_posts')) {
+    if (isset($_POST['ws_weibo_submit']) && (current_user_can('publish_posts') || ws_weibo_extend_post_capabilities())) {
         // 验证Nonce
         if (!isset($_POST['ws_weibo_post_nonce']) || !wp_verify_nonce($_POST['ws_weibo_post_nonce'], 'ws_weibo_post_action')) {
             wp_die('安全检查失败，请重试。');
@@ -1416,6 +1429,7 @@ function ws_weibo_handle_frontend_post() {
     }
 }
 add_action('init', 'ws_weibo_handle_frontend_post');
+
 
 
 // 卸载插件
