@@ -1,7 +1,7 @@
 <?php
 /*
  * Plugin Name: 小半微博心情说说
- * Plugin URI: https://www.jingxialai.com/4918.html
+ * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 微博说说前台用户版，支持所有用户发布心情，点赞，白名单等常规设置。
  * Version: 1.2
  * Author: Summer
@@ -20,7 +20,7 @@ function ws_weibo_activate() {
     // 设置字符集和排序规则
     $charset_collate = $wpdb->get_charset_collate();
     
-    // 创建ws_weibo_feelings表 微博数据
+    // 创建 'ws_weibo_feelings' 表
     $sql1 = "CREATE TABLE $feeling_table (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         user_id mediumint(9) NOT NULL,
@@ -31,7 +31,7 @@ function ws_weibo_activate() {
         PRIMARY KEY  (id)
     ) $charset_collate;";
     
-    // 创建ws_weibo_comments表 评论数据
+    // 创建 'ws_weibo_comments' 表
     $sql2 = "CREATE TABLE $comments_table (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         feeling_id mediumint(9) NOT NULL,
@@ -326,7 +326,7 @@ function ws_weibo_weibo_settings_page() {
     </script>    
     <?php
 }
-//上面分别用了常量(时间发布/隐藏用户/关闭评论)、直接存储(侧边栏内容)、数组存储(主框架/模式)3种方式，因为我在测试,不影响使用
+//上面分别用了常量(时间发布/隐藏用户/评论)、直接存储(侧边栏内容)、数组存储(主框架/模式)3种代码方式，因为我在测试,不影响使用
 
 
 // 前台微博页面主框架的样式
@@ -356,6 +356,10 @@ function ws_weibo_custom_container_style() {
             border-radius: 10px;
             border: 1px solid #ddd;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-left: 5px;
+            margin-right: 5px;
+            height: 100%;
+            overflow-y: auto; /* 主容器允许垂直滚动 */
         }
     ";
 
@@ -946,7 +950,7 @@ function ws_weibo_frontend_page() {
                     $(".ws-delete-all-button").click(function (event) {
                         event.preventDefault();
                         var $this = $(this);
-                        // 创建自定义提示框
+                        // 创建自定义提示框元素
                         var $promptBox = $("<div class=\'ws-delete-all-prompt-box\'>" +
                             "<p>确定要删除你所有的微博记录吗？</p>" +
                             "<button class=\'ws-delete-all-confirm-button\'>删除全部</button>" +
@@ -1167,7 +1171,7 @@ function ws_weibo_frontend_page() {
                     event.preventDefault();
                     var feelingId = $(this).data('id');
                     var $this = $(this);
-                    // 创建自定义删除提示框
+                    // 创建自定义删除提示框元素
                     var $promptBox = $('<div class="ws-delete-prompt-box">' +
                         '<p>确定要删除这条微博吗？</p>' +
                         '<button class="ws-delete-confirm-button">删除</button>' +
@@ -1394,7 +1398,8 @@ function ws_weibo_extend_post_capabilities() {
     return false;
 }
 
-// 检查逻辑
+
+// 处理前台发布微博
 function ws_weibo_handle_frontend_post() {
     if (isset($_POST['ws_weibo_submit']) && (current_user_can('publish_posts') || ws_weibo_extend_post_capabilities())) {
         // 验证Nonce
@@ -1429,7 +1434,6 @@ function ws_weibo_handle_frontend_post() {
     }
 }
 add_action('init', 'ws_weibo_handle_frontend_post');
-
 
 
 // 卸载插件
