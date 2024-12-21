@@ -3,7 +3,7 @@
  * Plugin Name: 小半微博心情说说
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 微博说说前台用户版，支持所有用户发布心情，点赞，白名单等常规设置。
- * Version: 1.2
+ * Version: 1.5
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -20,7 +20,7 @@ function ws_weibo_activate() {
     // 设置字符集和排序规则
     $charset_collate = $wpdb->get_charset_collate();
     
-    // 创建 'ws_weibo_feelings' 表
+    // 创建ws_weibo_feelings表 微博
     $sql1 = "CREATE TABLE $feeling_table (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         user_id mediumint(9) NOT NULL,
@@ -31,7 +31,7 @@ function ws_weibo_activate() {
         PRIMARY KEY  (id)
     ) $charset_collate;";
     
-    // 创建 'ws_weibo_comments' 表
+    // 创建ws_weibo_comments表 评论
     $sql2 = "CREATE TABLE $comments_table (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         feeling_id mediumint(9) NOT NULL,
@@ -135,9 +135,8 @@ function ws_weibo_weibo_settings_page() {
         // 隐藏前台用户统计板块
         $hide_user_statistics = isset($_POST['hide_user_statistics']) ? true : false;
 
-        // 微博公告和广告内容
-        $weibo_announcement = wp_kses_post($_POST['weibo_announcement']);
-        $weibo_advertisement = wp_kses_post($_POST['weibo_advertisement']);
+        // 关闭评论
+        $close_comments = isset($_POST['close_comments'])? true : false;
 
         // 容器ws-container样式
         $ws_weibo_container_max_width = sanitize_text_field($_POST['ws_weibo_container_max_width']);
@@ -145,8 +144,11 @@ function ws_weibo_weibo_settings_page() {
         $ws_weibo_container_padding = sanitize_text_field($_POST['ws_weibo_container_padding']);
         $ws_weibo_container_left_margin = sanitize_text_field($_POST['ws_weibo_container_left_margin']);
 
-        // 关闭评论
-        $close_comments = isset($_POST['close_comments'])? true : false;
+        // 微博公告和广告内容
+        $weibo_announcement = wp_kses_post($_POST['weibo_announcement']);
+        $weibo_advertisement = wp_kses_post($_POST['weibo_advertisement']);
+
+        //左侧边栏内容
         $left_sidebar_advertisement = wp_kses_post($_POST['left_sidebar_advertisement']);
 
         // 模式设置 默认为固定
@@ -155,19 +157,24 @@ function ws_weibo_weibo_settings_page() {
         // 每一页的微博数量默认20
         $posts_per_page = isset($_POST['posts_per_page']) ? intval($_POST['posts_per_page']) : 20;
 
+        // 无权发布微博的复选框
+        $allowed_roles = isset($_POST['ws_weibo_allowed_roles'])? $_POST['ws_weibo_allowed_roles'] : [];
+        // 无权发布微博的自定义提示内容
+        $unauthorized_message = wp_kses_post($_POST['ws_weibo_unauthorized_message']);
+
         // 保存设置
         $settings = array(
-            'start_time' => $start_time,
-            'end_time' => $end_time,
-            'disable_limit' => $disable_limit,
-            'hide_user_statistics' => $hide_user_statistics,
+            'start_time' => $start_time,  //开始时间
+            'end_time' => $end_time,  //结束时间
+            'disable_limit' => $disable_limit,   //取消时间
+            'hide_user_statistics' => $hide_user_statistics,  //关闭统计板块
             'ws_weibo_container_max_width' => $ws_weibo_container_max_width,
             'ws_weibo_container_margin' => $ws_weibo_container_margin,
             'ws_weibo_container_padding' => $ws_weibo_container_padding,
             'ws_weibo_container_left_margin' => $ws_weibo_container_left_margin,
-            'close_comments' => $close_comments,
-            'left_sidebar_advertisement' => $left_sidebar_advertisement,
-            'scroll_mode' => $scroll_mode                    
+            'close_comments' => $close_comments,  //关闭评论
+            'left_sidebar_advertisement' => $left_sidebar_advertisement,  //左侧边栏内容
+            'scroll_mode' => $scroll_mode  //模式选择                    
         );
 
         // 保存设置到数据库
@@ -175,7 +182,7 @@ function ws_weibo_weibo_settings_page() {
         update_option(ws_weibo_HIDE_USER_STATISTICS_OPTION, $settings);
         update_option(ws_weibo_CLOSE_COMMENTS_OPTION, $close_comments);
 
-        // 更新公告和广告
+        // 更新侧边栏公告和广告
         update_option('ws_weibo_weibo_announcement', $weibo_announcement);
         update_option('ws_weibo_weibo_advertisement', $weibo_advertisement);
         update_option('ws_weibo_left_sidebar_advertisement', $left_sidebar_advertisement);
@@ -183,11 +190,16 @@ function ws_weibo_weibo_settings_page() {
         // 每页微博数量
         update_option('ws_weibo_posts_per_page', $posts_per_page);
 
+        //更新无权发布微博的选择
+        update_option('ws_weibo_allowed_roles', $allowed_roles);
+        //更新无权发布微博的自定义提示内容
+        update_option('ws_weibo_unauthorized_message', $unauthorized_message);
+
         echo "<div class='updated'><p>微博设置已更新。</p></div>";
 
     }
 
-    // 获取当前设置，默认值
+    // 获取默认设置
     $current_settings = get_option(ws_weibo_WEIBO_POST_TIME_OPTION, array(
         'start_time' => '',
         'end_time' => '',
@@ -201,12 +213,14 @@ function ws_weibo_weibo_settings_page() {
         'scroll_mode' => 'fixed'    
     ));
 
-    // 获取公告和广告设置
+    // 获取公告和广告等设置
     $announcement = get_option('ws_weibo_weibo_announcement', '');
     $advertisement = get_option('ws_weibo_weibo_advertisement', '');
     $left_sidebar_advertisement = get_option('ws_weibo_left_sidebar_advertisement', '');
     $posts_per_page = get_option('ws_weibo_posts_per_page', 20);
-
+    $allowed_roles = get_option('ws_weibo_allowed_roles', []);
+    $current_unauthorized_message = get_option('ws_weibo_unauthorized_message', '');
+    
     ?>
     <style>
         /* 设置页面样式 */
@@ -273,6 +287,23 @@ function ws_weibo_weibo_settings_page() {
             <label for="close_comments">关闭前台评论功能</label>
             <br><br>
 
+            <h3>允许发布微博的用户权限组</h3>
+            <input type="checkbox" name="ws_weibo_allowed_roles[]" id="subscriber" value="subscriber" <?php if (in_array('subscriber', $allowed_roles)) echo 'checked';?> >
+            <label for="subscriber">订阅者Subscriber</label>
+            <br>
+            <input type="checkbox" name="ws_weibo_allowed_roles[]" id="contributor" value="contributor" <?php if (in_array('contributor', $allowed_roles)) echo 'checked';?> >
+            <label for="contributor">贡献者Contributor</label>
+            <br>
+            <input type="checkbox" name="ws_weibo_allowed_roles[]" id="author" value="author" <?php if (in_array('author', $allowed_roles)) echo 'checked';?> >
+            <label for="author">作者Author</label>
+            <br>
+            <input type="checkbox" name="ws_weibo_allowed_roles[]" id="editor" value="editor" <?php if (in_array('editor', $allowed_roles)) echo 'checked';?> >
+            <label for="editor">编辑Editor</label>
+            <br>
+            <input type="checkbox" name="ws_weibo_allowed_roles[]" id="administrator" value="administrator" <?php if (in_array('administrator', $allowed_roles)) echo 'checked';?> >
+            <label for="administrator">管理员Administrator</label>
+            <br><br>
+
             <h3>主框架模式</h3>
             <label for="scroll_mode">选择显示模式：</label>
             <select name="scroll_mode" id="scroll_mode">
@@ -307,12 +338,16 @@ function ws_weibo_weibo_settings_page() {
             <textarea name="left_sidebar_advertisement" rows="5" cols="100" placeholder="输入左侧广告内容"><?php echo esc_textarea($left_sidebar_advertisement); ?></textarea>
             <br><br>            
 
+            <h3>无权发布微博的提示内容</h3>
+            <textarea name="ws_weibo_unauthorized_message" id="ws_weibo_unauthorized_message" rows="5" cols="100" placeholder="输入提示内容"><?php echo esc_textarea($current_unauthorized_message);?></textarea>
+            <br><br>
 
             <input type="submit" name="submit_weibo_settings" value="保存设置" class="button-primary">
         </form>
         <p>1、公告和广告内容支持常见的HTML代码，所以添加广告图片、文字什么的都行。<br>2、侧边栏需要到网站小工具去添加，里面有一个微博右侧边栏、微博左侧边栏以及右侧边栏微博公告和广告、左侧边栏广告推荐的小工具，添加过去就行。<br>3、2个侧边栏都添加就是3栏模式，如果你只添加一个侧边栏，建议添加右侧边栏。<br>
         4、滚动模式 - 中间微博板块可以滑动，侧边栏单独固定在浏览器上，固定模式 - 不能滑动，全部固定。<br>
-        5、微博列表板块按需设置吧，根据和你的主题页面属性。</p>
+        5、微博列表板块按需设置吧，根据和你的主题页面属性。<br>
+    6、设置不允许发布微博的用户组之后，但是他们依旧可以评论，写点提示内容，可以当留言板用（只有被封禁的用户，才不能评论）。</p>
     </div>
     <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -990,32 +1025,46 @@ function ws_weibo_frontend_page() {
             </script>';
         }
      ?>
-       
-        <?php
-        // 检查当前时间是否在允许发布微博的时间段内
-        if (!ws_weibo_is_within_post_time()) {
-            echo "<p>当前不在发布微博的时间范围呢，请等待开放。</p>";
+
+
+     <?php
+
+     // 获取允许发布微博的用户权限设置
+     $allowed_roles = get_option('ws_weibo_allowed_roles', []);
+     // 获取当前登录用户的角色
+     $current_user = wp_get_current_user();
+     $current_user_roles = $current_user->roles;
+     $current_user_role = reset($current_user_roles);
+
+     // 检查当前时间是否在允许发布微博的时间段内
+     if (!ws_weibo_is_within_post_time()) {
+        echo "<div class='ws-unauthorized-message'><p>当前不在发布微博的时间范围呢，请等待开放。</p></div>";
+    } else {
+    // 判断当前用户是否有权限发布微博
+        if (!in_array($current_user_role, $allowed_roles)) {
+        // 获取无权用户发布微博内容提示框的内容
+            $unauthorized_message = get_option('ws_weibo_unauthorized_message', '你没有权限发布微博哦');
+            echo "<div class='ws-unauthorized-message'>$unauthorized_message</div>";
         } else {
-            // 若在时间范围内，显示发布表单
+        // 若在时间范围内且有权限，显示发布表单
             if (is_user_logged_in()) {
-                // 检查用户是否被禁止发布微博
+            // 检查用户是否被禁止发布微博
                 $banned_users = get_option('ws_weibo_banned_users', []);
                 if (in_array(get_current_user_id(), $banned_users)) {
-                    echo "<p>你已被禁止发布微博和评论。</p>";
+                    echo "<div class='ws-unauthorized-message'><p>你已被禁止发布微博和评论。</p></div>";
                 } else {
-   ?>
+                    ?>
                     <form action="" method="post">
                         <?php wp_nonce_field('ws_weibo_post_action', 'ws_weibo_post_nonce');?>
                         <textarea name="ws_weibo_content" placeholder="发布你的心情..." required></textarea><br>
                         <input type="submit" name="ws_weibo_submit" value="发布">
                     </form>
-        <?php
+                    <?php
                 }
-            } else {
-                echo "<p>请先登录</p>";
             }
         }
-   ?>
+    }
+    ?>
 
         <?php
         // 获取每页显示微博的数量
@@ -1385,7 +1434,7 @@ function ws_weibo_frontend_page() {
 add_shortcode('ws_weibo_feeling', 'ws_weibo_frontend_page');
 
 
-// 允许订阅者和贡献者发布微博
+// 获取用户组发布微博
 function ws_weibo_extend_post_capabilities() {
     if (isset($_POST['ws_weibo_submit'])) {
         // 检查用户角色
@@ -1457,6 +1506,7 @@ function ws_weibo_uninstall() {
         'ws_weibo_enable_history_today_option',
         'ws_weibo_blocked_keywords',
         'ws_weibo_image_whitelist',
+        'ws_weibo_unauthorized_message',
     ];
 
     foreach ($options as $option) {
