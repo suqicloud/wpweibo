@@ -43,5 +43,4 @@
 插件会创建2个独立的数据表：ws_weibo_feelings（微博数据）、ws_weibo_comments（微博评论），如果你以后彻底不用这个插件了，可以去删掉这2个数据表。
 
 
-```markdown
 ![截图](https://ice.frostsky.com/2024/12/21/a9576e11520c230a9fc3ad50aec2b7fa.jpeg)
