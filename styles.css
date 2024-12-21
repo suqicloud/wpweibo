@@ -744,6 +744,16 @@ body {
     text-decoration: underline;
 }
 
+/* 提示内容 */
+.ws-unauthorized-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
 
 /* 屏幕小于1024px时隐藏右侧和左侧边栏 */
 @media (max-width: 1024px) {
