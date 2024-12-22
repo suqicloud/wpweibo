@@ -3,7 +3,7 @@
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论白名单等常规设置。
- * Version: 1.5
+ * Version: 1.6
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -162,6 +162,9 @@ function ws_weibo_weibo_settings_page() {
         // 无权发布微博的自定义提示内容
         $unauthorized_message = wp_kses_post($_POST['ws_weibo_unauthorized_message']);
 
+        // 自定义前台页面标题
+        $ws_weibo_frontend_title = sanitize_text_field($_POST['ws_weibo_frontend_title']);
+
         // 保存设置
         $settings = array(
             'start_time' => $start_time,  //开始时间
@@ -174,7 +177,8 @@ function ws_weibo_weibo_settings_page() {
             'ws_weibo_container_left_margin' => $ws_weibo_container_left_margin,
             'close_comments' => $close_comments,  //关闭评论
             'left_sidebar_advertisement' => $left_sidebar_advertisement,  //左侧边栏内容
-            'scroll_mode' => $scroll_mode  //模式选择                    
+            'scroll_mode' => $scroll_mode,  //模式选择
+            'ws_weibo_frontend_title' => $ws_weibo_frontend_title  // 保存前台标题                    
         );
 
         // 保存设置到数据库
@@ -210,7 +214,8 @@ function ws_weibo_weibo_settings_page() {
         'ws_weibo_container_padding' => '20px',
         'ws_weibo_container_left_margin' => '10px',
         'close_comments' => false,
-        'scroll_mode' => 'fixed'    
+        'scroll_mode' => 'fixed',
+        'ws_weibo_frontend_title' => '微心情 - 分享你的心情'  
     ));
 
     // 获取公告和广告等设置
@@ -276,6 +281,10 @@ function ws_weibo_weibo_settings_page() {
             <h3>每页显示数量</h3>
             <label for="posts_per_page">每一页显示的微博数量：</label>
             <input type="number" name="posts_per_page" id="posts_per_page" value="<?php echo esc_attr($posts_per_page); ?>" min="1" max="100">
+            <br><br>
+
+            <h3>前台页面标题</h3>
+            <input type="text" name="ws_weibo_frontend_title" value="<?php echo esc_attr($current_settings['ws_weibo_frontend_title']); ?>" placeholder="输入前台页面标题" style="width: 100%; max-width: 500px; padding: 5px;">
             <br><br>
 
             <h3>隐藏选项</h3>
@@ -943,6 +952,9 @@ add_action('widgets_init', 'ws_weibo_register_left_ad_widget');
 function ws_weibo_frontend_page() {
     ob_start();
 
+    //获取标题
+    $ws_weibo_frontend_title = get_option(ws_weibo_WEIBO_POST_TIME_OPTION)['ws_weibo_frontend_title'];
+
     // 确保ajaxurl可用
     echo '<script type="text/javascript">
         var ajaxurl = "'. admin_url('admin-ajax.php'). '";
@@ -964,7 +976,7 @@ function ws_weibo_frontend_page() {
         <?php endif; ?>
 
     <div class="ws-container">
-        <h2>微心情 - 动态与说说</h2>
+        <h2><?php echo esc_html($ws_weibo_frontend_title); ?></h2>
         <?php
         //获取隐藏统计设置
         $settings = get_option(ws_weibo_HIDE_USER_STATISTICS_OPTION);
@@ -1513,4 +1525,3 @@ function ws_weibo_uninstall() {
         delete_option($option);
     }
 }
-
