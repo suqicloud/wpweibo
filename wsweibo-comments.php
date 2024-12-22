@@ -69,7 +69,7 @@ function ws_weibo_manage_comments_page() {
             <input type="submit" value="查询" class="button">
             <?php if ($user_id_to_query > 0) :?>
                 <input type="hidden" name="user_id" value="<?php echo esc_attr($user_id_to_query);?>">
-                <!-- 删除用户全部评论-->
+                <!-- 使用button标签显示中文-->
                 <button type="submit" name="action" value="delete_all" class="button" onclick="return confirm('确定要删除该用户的所有评论记录吗？')">删除用户全部评论</button>
             <?php endif;?>
             <!-- 一键清空全部评论按钮 -->
@@ -152,6 +152,9 @@ function ws_weibo_submit_comment() {
         $comment_content = sanitize_text_field($_POST['comment_content']);
         $user_id = get_current_user_id();
 
+        // 处理评论内容中的屏蔽关键词
+        $comment_content = ws_weibo_process_blocked_keywords($comment_content);
+        
         // 检查用户是否被禁止发布微博，同时禁止评论
         $banned_users = get_option('ws_weibo_banned_users', []);
         if (in_array($user_id, $banned_users)) {
@@ -211,7 +214,12 @@ function ws_weibo_load_comments() {
             )
         );
 
+        // 如果有评论，处理屏蔽关键词并返回
         if ($comments) {
+            // 对每个评论内容应用关键词屏蔽
+            foreach ($comments as &$comment) {
+                $comment->content = ws_weibo_process_blocked_keywords($comment->content);
+            }
             wp_send_json_success(['comments' => $comments]);
         } else {
             wp_send_json_error(['message' => '没有评论']);
