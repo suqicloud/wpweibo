@@ -1,8 +1,8 @@
 <?php
 /*
- * Plugin Name: 小半微博心情说说
+ * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
- * Description: 微博说说前台用户版，支持所有用户发布心情，点赞，白名单等常规设置。
+ * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论白名单等常规设置。
  * Version: 1.5
  * Author: Summer
  * License: GPL License
@@ -80,7 +80,7 @@ function ws_weibo_create_feeling_page_on_activation() {
     if (!$page) {
         // 创建页面数据
         $page_data = array(
-            'post_title'   => '微博心情说说', // 页面标题
+            'post_title'   => '微心情动态', // 页面标题
             'post_content' => '[ws_weibo_feeling]', // 插入短代码
             'post_status'  => 'publish', // 发布状态
             'post_type'    => 'page', // 页面
@@ -103,7 +103,7 @@ add_action('wp_enqueue_scripts', 'ws_weibo_enqueue_styles');
 
 // 添加菜单页面
 function ws_weibo_admin_menu() {
-    add_menu_page('微博心情说说', '微博管理', 'manage_options', 'ws_weibo_feelings_manage', 'ws_weibo_manage_feelings_page', 'dashicons-admin-site', 26);
+    add_menu_page('微心情动态说说', '微博管理', 'manage_options', 'ws_weibo_feelings_manage', 'ws_weibo_manage_feelings_page', 'dashicons-admin-site', 26);
     add_submenu_page('ws_weibo_feelings_manage', '微博列表管理', '微博列表', 'manage_options', 'ws_weibo_feelings_manage', 'ws_weibo_manage_feelings_page');
     add_submenu_page('ws_weibo_feelings_manage', '微博评论管理', '评论列表', 'manage_options', 'ws_weibo_comments_manage', 'ws_weibo_manage_comments_page');
     add_submenu_page('ws_weibo_feelings_manage', '封禁用户设置', '封禁用户', 'manage_options', 'ws_weibo_user_settings', 'ws_weibo_user_settings_page');
@@ -490,7 +490,7 @@ function ws_weibo_process_content_images($content) {
 
                 // 检查图片链接是否在白名单内
                 if (in_array($domain, $whitelist_domains)) {
-                    $group_html .= '<img src="' . esc_url($image) . '" alt="微博心情说说" class="ws-image">';
+                    $group_html .= '<img src="' . esc_url($image) . '" alt="微心情动态说说" class="ws-image">';
                 } else {
                     // 不在白名单内，显示图片链接
                     $group_html .= '<p>' . esc_html($image) . '</p>';
@@ -964,7 +964,7 @@ function ws_weibo_frontend_page() {
         <?php endif; ?>
 
     <div class="ws-container">
-        <h2>微博心情说说</h2>
+        <h2>微心情 - 动态与说说</h2>
         <?php
         //获取隐藏统计设置
         $settings = get_option(ws_weibo_HIDE_USER_STATISTICS_OPTION);
