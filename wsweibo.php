@@ -2,8 +2,8 @@
 /*
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
- * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论白名单等常规设置。
- * Version: 1.6
+ * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论，白名单等常规设置。
+ * Version: 1.7
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -165,6 +165,9 @@ function ws_weibo_weibo_settings_page() {
         // 自定义前台页面标题
         $ws_weibo_frontend_title = sanitize_text_field($_POST['ws_weibo_frontend_title']);
 
+        // 关闭上传图片
+        $disable_upload_image = isset($_POST['disable_upload_image']) ? true : false;
+
         // 保存设置
         $settings = array(
             'start_time' => $start_time,  //开始时间
@@ -176,6 +179,7 @@ function ws_weibo_weibo_settings_page() {
             'ws_weibo_container_padding' => $ws_weibo_container_padding,
             'ws_weibo_container_left_margin' => $ws_weibo_container_left_margin,
             'close_comments' => $close_comments,  //关闭评论
+            'disable_upload_image' => $disable_upload_image,  //关闭图片上传
             'left_sidebar_advertisement' => $left_sidebar_advertisement,  //左侧边栏内容
             'scroll_mode' => $scroll_mode,  //模式选择
             'ws_weibo_frontend_title' => $ws_weibo_frontend_title  // 保存前台标题                    
@@ -215,6 +219,7 @@ function ws_weibo_weibo_settings_page() {
         'ws_weibo_container_left_margin' => '10px',
         'close_comments' => false,
         'scroll_mode' => 'fixed',
+        'disable_upload_image' => false,
         'ws_weibo_frontend_title' => '微心情 - 分享你的心情'  
     ));
 
@@ -295,6 +300,11 @@ function ws_weibo_weibo_settings_page() {
             <input type="checkbox" name="close_comments" id="close_comments" <?php checked($current_settings['close_comments'], true);?>>
             <label for="close_comments">关闭前台评论功能</label>
             <br><br>
+
+            <input type="checkbox" name="disable_upload_image" id="disable_upload_image" <?php checked($current_settings['disable_upload_image'], true); ?>>
+            <label for="disable_upload_image">关闭前台用户上传图片功能</label>
+            <br><br>
+
 
             <h3>允许发布微博的用户权限组</h3>
             <input type="checkbox" name="ws_weibo_allowed_roles[]" id="subscriber" value="subscriber" <?php if (in_array('subscriber', $allowed_roles)) echo 'checked';?> >
@@ -1048,6 +1058,9 @@ function ws_weibo_frontend_page() {
      $current_user_roles = $current_user->roles;
      $current_user_role = reset($current_user_roles);
 
+     //获取关闭图片上传
+     $disable_upload_image = isset($settings['disable_upload_image']) ? $settings['disable_upload_image'] : false;
+
      // 检查当前时间是否在允许发布微博的时间段内
      if (!ws_weibo_is_within_post_time()) {
         echo "<div class='ws-unauthorized-message'><p>当前不在发布微博的时间范围呢，请等待开放。</p></div>";
@@ -1066,11 +1079,25 @@ function ws_weibo_frontend_page() {
                     echo "<div class='ws-unauthorized-message'><p>你已被禁止发布微博和评论。</p></div>";
                 } else {
                     ?>
-                    <form action="" method="post">
-                        <?php wp_nonce_field('ws_weibo_post_action', 'ws_weibo_post_nonce');?>
-                        <textarea name="ws_weibo_content" placeholder="发布你的心情..." required></textarea><br>
-                        <input type="submit" name="ws_weibo_submit" value="发布">
-                    </form>
+
+        <!-- 发布微博表单 -->
+        <form action="" method="post" id="ws_weibo_form" enctype="multipart/form-data">
+            <?php wp_nonce_field('ws_weibo_post_action', 'ws_weibo_post_nonce'); ?>
+            <textarea name="ws_weibo_content" placeholder="发布你的心情..." required></textarea><br>
+
+            <?php if (!$disable_upload_image) : ?>
+                <!-- 上传区域的容器 -->
+                <div class="ws-weibo-upload-area">
+                    <label for="ws_weibo_image" class="custom-upload-btn">选择图片</label>
+                    <input type="file" name="ws_weibo_image" id="ws_weibo_image" accept="image/*"><br>
+                    <div id="ws_image_message"></div>
+                    <!-- 图片预览 -->
+                    <div id="ws_image_preview"></div>
+                </div>
+            <?php endif; ?>
+
+            <input type="submit" name="ws_weibo_submit" value="发布">
+        </form>
                     <?php
                 }
             }
@@ -1428,7 +1455,39 @@ function ws_weibo_frontend_page() {
         }
     });
 });
-    
+        // 图片上传区域
+        $('#ws_weibo_image').on('change', function () {
+            var file = this.files[0];
+            var validFormats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']; // 支持的图片格式
+            var maxSize = 2 * 1024 * 1024; // 最大文件大小 2MB
+
+            // 消息显示
+            var messageContainer = $('#ws_image_message');
+
+            // 清空消息
+            messageContainer.text('');
+
+            // 检查图片格式
+            if ($.inArray(file.type, validFormats) === -1) {
+                messageContainer.text('只允许上传 JPG, PNG, GIF, WebP 格式的图片。');
+                $(this).val(''); // 清除文件输入框
+                return;
+            }
+
+            // 检查图片大小
+            if (file.size > maxSize) {
+                messageContainer.text('图片大小不能超过 5MB。');
+                $(this).val(''); // 清除文件输入框
+                return;
+            }
+
+            // 图片预览
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $('#ws_image_preview').html('<img src="' + e.target.result + '" style="max-width: 100px; max-height: 100px;">');
+            };
+            reader.readAsDataURL(file);
+        });      
 });
         </script>
         </div>
@@ -1477,9 +1536,67 @@ function ws_weibo_handle_frontend_post() {
             wp_die('你已被禁止发布微博和评论。');
         }
 
+        // 获取微博内容
         $content = sanitize_text_field($_POST['ws_weibo_content']);
-        
-        // 插入数据
+
+        // 处理上传的图片
+        $attachment_url = '';
+        if (isset($_FILES['ws_weibo_image']) && !empty($_FILES['ws_weibo_image']['name'])) {
+            $file = $_FILES['ws_weibo_image'];
+            $file_type = wp_check_filetype($file['name']);
+            $file_size = $file['size'];
+            $valid_formats = ['jpg', 'jpeg', 'png', 'gif', 'webp']; // 支持的图片格式
+            $max_size = 2 * 1024 * 1024; // 最大文件大小 2MB
+
+            // 验证图片格式
+            if (!in_array(strtolower($file_type['ext']), $valid_formats)) {
+                // 返回错误信息
+                set_transient('ws_weibo_image_error', '只允许上传 JPG, PNG, GIF, WebP 格式的图片。', 30);
+                wp_safe_redirect(remove_query_arg(['ws_weibo_message', 'success'], wp_get_referer()));
+                exit;
+            }
+
+            // 验证图片大小
+            if ($file_size > $max_size) {
+                // 返回错误信息
+                set_transient('ws_weibo_image_error', '图片大小不能超过 2MB。', 30);
+                wp_safe_redirect(remove_query_arg(['ws_weibo_message', 'success'], wp_get_referer()));
+                exit;
+            }
+
+            // 上传图片到媒体库
+            $upload = wp_handle_upload($file, ['test_form' => false]);
+
+            if (isset($upload['url'])) {
+                // 图片上传成功，获取图片URL
+                $attachment_url = $upload['url'];
+
+                // 将图片插入到媒体库
+                $wp_filetype = wp_check_filetype($upload['file'], null);
+                $attachment = array(
+                    'guid' => $upload['url'], 
+                    'post_mime_type' => $wp_filetype['type'],
+                    'post_title' => preg_replace('/\.[^.]+$/', '', basename($upload['file'])),
+                    'post_content' => '',
+                    'post_status' => 'inherit'
+                );
+
+                // 插入数据库
+                $attachment_id = wp_insert_attachment($attachment, $upload['file']);
+
+                // 生成元数据
+                require_once(ABSPATH . 'wp-admin/includes/image.php');
+                $attachment_data = wp_generate_attachment_metadata($attachment_id, $upload['file']);
+                wp_update_attachment_metadata($attachment_id, $attachment_data);
+            }
+        }
+
+        // 如果有图片，添加到内容中
+        if ($attachment_url) {
+            $content .= '<img src="' . esc_url($attachment_url) . '" alt="微心情图片">';
+        }
+
+        // 插入数据到数据库
         $wpdb->insert($table_name, [
             'user_id' => get_current_user_id(),
             'content' => $content,
@@ -1494,6 +1611,7 @@ function ws_weibo_handle_frontend_post() {
         exit;
     }
 }
+
 add_action('init', 'ws_weibo_handle_frontend_post');
 
 
