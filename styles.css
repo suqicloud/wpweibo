@@ -744,7 +744,7 @@ body {
     text-decoration: underline;
 }
 
-/* 提示内容 */
+/* 无权发布微博提示 */
 .ws-unauthorized-message {
     background-color: #f8d7da;
     color: #721c24;
@@ -753,6 +753,57 @@ body {
     border-radius: 4px;
     margin-bottom: 10px;
 }
+
+
+/* 上传图片区域 */
+.ws-weibo-upload-area {
+    margin-top: 2px;
+}
+
+#ws_weibo_image {
+    display: none
+}
+
+/* 上传图片按钮样式 */
+.custom-upload-btn {
+    background-color: #4CAF50;
+    color: #fff;
+    padding: 5px 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.custom-upload-btn:hover {
+    background-color: #45a049;
+}
+
+/* 图片预览区 */
+#ws_image_preview {
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* 预览的图片样式 */
+#ws_image_preview img {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 8px;
+    margin: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 错误信息样式 */
+#ws_image_message {
+    font-size: 14px;
+    color: red;
+    margin-top: 2px;
+}
+
 
 
 /* 屏幕小于1024px时隐藏右侧和左侧边栏 */
