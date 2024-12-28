@@ -3,7 +3,7 @@
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论，白名单等常规设置。
- * Version: 1.7
+ * Version: 1.8
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -662,6 +662,12 @@ function ws_weibo_process_content_with_media($content) {
     // 微博中的视频链接
     $content = ws_weibo_process_content_videos($content);
 
+    // Bilibili视频解析
+    $content = ws_weibo_process_content_bilibili_videos($content);
+
+    // 网易云音乐解析
+    $content = ws_weibo_parse_netease_music($content);
+
     // 屏蔽关键词
     $content = ws_weibo_process_content_with_code_escape($content);
     return ws_weibo_process_blocked_keywords($content);
@@ -775,6 +781,55 @@ function ws_weibo_delete_all_feelings() {
 add_action('wp_ajax_ws_weibo_delete_all_feelings', 'ws_weibo_delete_all_feelings');
 add_action('wp_ajax_nopriv_ws_weibo_delete_all_feelings', 'ws_weibo_delete_all_feelings');
 
+// Bilibili视频解析
+function ws_weibo_process_content_bilibili_videos($content) {
+    // 正则表达式匹配Bilibili视频链接
+    $pattern = '/https?:\/\/(?:www\.)?bilibili\.com\/video\/([a-zA-Z0-9]+)/i';
+    preg_match_all($pattern, $content, $matches);
+
+    if (!empty($matches[0])) {
+        $videos = $matches[0]; // 获取所有Bilibili视频链接
+        $video_html = '<div class="ws-bilibili-videos">';
+
+        foreach ($matches[1] as $video_id) {
+            // 嵌入iframe，展示Bilibili视频
+            $iframe_url = "https://player.bilibili.com/player.html?bvid={$video_id}&page=1&autoplay=0";
+            $video_html .= '<div class="ws-bilibili-video">';
+            $video_html .= '<iframe src="' . esc_url($iframe_url) . '" 
+                                 frameborder="0" 
+                                 allowfullscreen="true" 
+                                 scrolling="no"
+                                 width="100%" 
+                                 height="400px"
+                                 border-radius="10px" 
+                                 class="ws-bilibili-iframe"></iframe>';
+            $video_html .= '</div>';
+        }
+
+        $video_html .= '</div>';
+
+        // 替换Bilibili视频链接为嵌入的HTML
+        $content = preg_replace($pattern, '', $content); // 移除原始链接
+        $content .= $video_html; // 添加视频展示的HTML
+    }
+
+    return $content;
+}
+
+// 检测网易云音乐链接并生成播放器
+function ws_weibo_parse_netease_music($content) {
+    $content = preg_replace_callback(
+        '/https?:\/\/music\.163\.com\/#\/song\?id=(\d+)/',
+        function ($matches) {
+            $song_id = $matches[1]; // 提取歌曲ID
+            $iframe = '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="//music.163.com/outchain/player?type=2&id=' . $song_id . '&auto=0&height=66"></iframe>';
+            return $iframe; // 用iframe替换链接
+        },
+        $content
+    );
+
+    return $content;
+}
 
 //获取当前用户微博数量
 function ws_weibo_get_user_weibo_count() {
