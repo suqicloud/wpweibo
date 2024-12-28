@@ -829,7 +829,8 @@ function ws_weibo_process_content_bilibili_videos($content) {
 // 检测网易云音乐链接并生成播放器
 function ws_weibo_parse_netease_music($content) {
     $content = preg_replace_callback(
-        '/https?:\/\/music\.163\.com\/#\/song\?id=(\d+)/',
+        //'/https?:\/\/music\.163\.com\/#\/song\?id=(\d+)/',
+        '/https?:\/\/music\.163\.com\/(?:#\/)?song\?id=(\d+)(?:&.*)?/',
         function ($matches) {
             $song_id = $matches[1]; // 提取歌曲ID
             $iframe = '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="//music.163.com/outchain/player?type=2&id=' . $song_id . '&auto=0&height=66"></iframe>';
@@ -840,6 +841,7 @@ function ws_weibo_parse_netease_music($content) {
 
     return $content;
 }
+
 
 //获取当前用户微博数量
 function ws_weibo_get_user_weibo_count() {
