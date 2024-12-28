@@ -792,12 +792,14 @@ add_action('wp_ajax_nopriv_ws_weibo_delete_all_feelings', 'ws_weibo_delete_all_f
 
 // Bilibili视频解析
 function ws_weibo_process_content_bilibili_videos($content) {
-    // 正则表达式匹配Bilibili视频链接
-    $pattern = '/https?:\/\/(?:www\.)?bilibili\.com\/video\/([a-zA-Z0-9]+)/i';
+    // 匹配Bilibili视频链接
+    //$pattern = '/https?:\/\/(?:www\.)?bilibili\.com\/video\/([a-zA-Z0-9]+)/i';
+    $pattern = '/https?:\/\/(?:www\.)?bilibili\.com\/video\/([a-zA-Z0-9]+)(?:[\/?].*)?/i';
     preg_match_all($pattern, $content, $matches);
 
+
     if (!empty($matches[0])) {
-        $videos = $matches[0]; // 获取所有Bilibili视频链接
+        $videos = $matches[0]; // 获取Bilibili视频链接
         $video_html = '<div class="ws-bilibili-videos">';
 
         foreach ($matches[1] as $video_id) {
