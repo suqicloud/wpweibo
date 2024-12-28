@@ -614,7 +614,7 @@ function ws_weibo_process_content_links($content) {
 
 // 对内容转义处理，排除图片和视频需要的标签
 function ws_weibo_process_content_with_code_escape($content) {
-    // 允许的html标签
+    // 允许的HTML标签
     $allowed_tags = array(
         'video' => array(
             'controls' => true,
@@ -623,6 +623,15 @@ function ws_weibo_process_content_with_code_escape($content) {
         'source' => array(
             'src' => true,
             'type' => true
+        ),
+        'iframe' => array(
+            'src' => true,
+            'width' => true,
+            'height' => true,
+            'frameborder' => true,
+            'allowfullscreen' => true,
+            'scrolling' => true,
+            'class' => true
         ),
         'div' => array(
             'class' => true
