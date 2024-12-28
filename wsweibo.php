@@ -812,7 +812,6 @@ function ws_weibo_process_content_bilibili_videos($content) {
                                  scrolling="no"
                                  width="100%" 
                                  height="400px"
-                                 border-radius="10px" 
                                  class="ws-bilibili-iframe"></iframe>';
             $video_html .= '</div>';
         }
