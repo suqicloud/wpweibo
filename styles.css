@@ -3,6 +3,7 @@
 body {
     background: linear-gradient(to right, #e0f7fa, #ffffff);
 }
+
 /* 全屏主框架 
 .ws-wbwrap {
     max-width: 1200px;
@@ -157,7 +158,7 @@ body {
 /* 鼠标悬停 */
 .ws-pagination a:hover {
     background-color: #008fcc;
-    color: #fff; /* 悬停时文字颜色 */
+    color: #fff;
 }
 
 .ws-pagination a.current {
@@ -171,7 +172,7 @@ body {
 
 .ws-pagination a.ws-pagination-link:hover {
     background-color: #008fcc;
-    color: #fff; /* 悬停时文字颜色 */
+    color: #fff;
 }
 /* 分页按钮板块样式 - 结束 */
 
@@ -195,7 +196,7 @@ body {
     height: auto !important; /* 保持图片的原始比例 */
     display: block; /* 避免img下面出现空白缝隙 */
     margin: 2px !important; /* 给图片之间增加一点间距 */
-    border-radius: 8px; /* 圆角处理 */
+    border-radius: 8px;
 }
 
 .ws-image-row-1 img {
@@ -245,8 +246,8 @@ body {
 .ws-like-timestamp-section {
     display: flex;
     justify-content: space-between;  /* 点赞和日期两端对齐 */
-    align-items: center;  /* 居中对齐 */
-    margin-top: 10px;  /* 上面内容的间距 */
+    align-items: center;
+    margin-top: 10px;
     border-top: 1px solid #eee;  /* 添加顶部横线 */
     padding-top: 5px;  /* 横线与内容间距 */
 }
@@ -254,13 +255,13 @@ body {
 /* 点赞图标及点赞数量 */
 .ws-like-section {
     display: flex;
-    align-items: center;  /* 垂直居中 */
+    align-items: center;
 }
 
 .ws-like-section.like-count {
     margin-left: 5px;  /* 点赞图标和点赞数量文本的间距 */
-    font-size: 12px;  /* 点赞数量文本字体大小 */
-    color: #999;  /* 点赞数量文本颜色 */
+    font-size: 12px;
+    color: #999;
 }
 
 
@@ -281,7 +282,7 @@ body {
     padding: 1px 5px;
     border-radius: 3px;
     cursor: pointer;
-    text-decoration: none !important; /* 取消下划线 */
+    text-decoration: none !important;
     font-size: 12px;
     margin-left: 10px;
     display: inline-block; /* 让按钮在一行内显示 */
@@ -295,8 +296,8 @@ body {
 /* 微博列表删除 - 提示框整体样式 */
 .ws-delete-prompt-box {
     position: fixed;
-    top: 50%; /* 后台可以自定义 */ /* 后台可以自定义 */
-    left: 50%; /* 后台可以自定义 */
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
     background-color: #fff;
     border: 1px solid #ccc;
@@ -347,19 +348,19 @@ body {
 /* 用户统计ws-statistics板块整体样式 - 开始*/
 .ws-statistics {
     display: flex;
-    align-items: center; /* 垂直居中对齐内部元素 */
+    align-items: center;
     justify-content: flex-start; /* 左对齐 */
-    gap: 10px; /* 元素之间间隔距离 */
-    padding: 5px 10px; /* 内边距 */
+    gap: 10px;
+    padding: 5px 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    background-color: #f9f9f9; /* 背景色 */
-    margin-bottom: 15px; /* 距离底部的边距 */ 
+    background-color: #f9f9f9;
+    margin-bottom: 15px;
 }
 
 /* 用户统计头像样式调整 */
 .ws-statistics.ws-avatar {
-    width: 40px; /* 和获取头像时尺寸保持一致 */
+    width: 40px;
     height: 40px;
     border-radius: 50%;
 }
@@ -383,24 +384,24 @@ body {
     background-color: #555;
     color: #fff;
     border: none; /* 去除边框 */
-    padding: 2px 5px; /* 内边距，控制按钮大小 */
+    padding: 2px 5px;
     border-radius: 4px;
     cursor: pointer; /* 鼠标悬停变为手型 */
 }
 
 .ws-delete-all-button:hover {
-    background-color: #d32f2f; /* 鼠标悬停背景颜色 */
+    background-color: #d32f2f;
 }
 
 /* 删除全部微博提示框整体样式 */
 .ws-delete-all-prompt-box {
     position: fixed;
-    top: 50%; /* 后台可以自定义 */
-    left: 50%; /* 后台可以自定义 */
+    top: 50%;
+    left: 50%;
     transform: translate(-50%, -50%); /* 居中 */
     background-color: #fff;
     border: 1px solid #ccc;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* 阴影效果，增加立体感 */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     padding: 20px;
     border-radius: 4px;
     z-index: 9999; /* 确保提示框在页面上层显示 */  
@@ -425,12 +426,12 @@ body {
 }
 
 .ws-delete-all-confirm-button:hover {
-    background-color: #c82333; /* 鼠标悬停颜色 */
+    background-color: #c82333;
 }
 
 /* 取消删除全部微博按钮 */
 .ws-delete-all-cancel-button {
-    background-color: #ccc; /* 灰色背景 */
+    background-color: #ccc;
     color: #333;
     border: none;
     padding: 8px 16px;
@@ -439,7 +440,7 @@ body {
 }
 
 .ws-delete-all-cancel-button:hover {
-    background-color: #b3b3b3; /* 鼠标悬停加深颜色 */
+    background-color: #b3b3b3;
 }
 /* 删除全部微博的区域样式 - 结束*/
 
@@ -466,11 +467,11 @@ body {
 }
 
 .ws-feeling-sidebar .ws-announcement {
-    background-color: #e7f3e7; /* 公告背景颜色 */
+    background-color: #e7f3e7;
 }
 
 .ws-feeling-sidebar .ws-advertisement {
-    background-color: #f9f9f9; /* 广告背景颜色 */
+    background-color: #f9f9f9;
 }
 /* 右边侧边广告和公告样式 - 结束*/
 
@@ -623,8 +624,9 @@ body {
     z-index: 1000;
 }*/
 
+ /* 错误消息 */
 .ws-message-error {
-    background-color: #dc3545; /* 错误消息背景颜色 */
+    background-color: #dc3545;
 }
 /* 评论区结束 */
 
@@ -744,7 +746,6 @@ body {
     text-decoration: underline;
 }
 
-/* 无权发布微博提示 */
 .ws-unauthorized-message {
     background-color: #f8d7da;
     color: #721c24;
@@ -754,57 +755,163 @@ body {
     margin-bottom: 10px;
 }
 
-
-/* 上传图片区域 */
-.ws-weibo-upload-area {
-    margin-top: 2px;
+/* 上传图片区域 - 开始 */
+/* 图片预览容器 */
+#ws-image-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
-#ws_weibo_image {
-    display: none
+/* 图片预览 */
+.ws-image-preview-item {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-/* 上传图片按钮样式 */
-.custom-upload-btn {
+/* 图片样式 */
+.ws-image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* 选择图片按钮 */
+#ws-select-images-button {
     background-color: #4CAF50;
     color: #fff;
-    padding: 5px 10px;
-    font-size: 16px;
     border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.custom-upload-btn:hover {
+/* 悬停状态 */
+#ws-select-images-button:hover {
     background-color: #45a049;
+    transform: translateY(-2px);
 }
 
-/* 图片预览区 */
-#ws_image_preview {
-    margin-top: 5px;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
+/* 按钮点击时 */
+#ws-select-images-button:active {
+    background-color: #388e3c;
+    transform: translateY(1px);
 }
 
-/* 预览的图片样式 */
-#ws_image_preview img {
-    max-width: 100px;
-    max-height: 100px;
-    border-radius: 8px;
-    margin: 5px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+/* 按钮在不可用时 */
+#ws-select-images-button:disabled {
+    background-color: #c5e1a5;
+    cursor: not-allowed;  /* 不可点击状态 */
+}
+
+/* 按钮内边距 */
+#ws-select-images-button + button {
+    margin-left: 10px;
+}
+
+/* 继续添加按钮默认隐藏 */
+#ws-add-more-images {
+    display: none;
+}
+
+/* 继续添加按钮 */
+#ws-add-more-images {
+    display: inline-block;
+    background-color: #2196F3;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+
+#ws-add-more-images:hover {
+    background-color: #0b7dda;
+}
+
+/* 图片删除按钮 */
+.ws-delete-image {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 50%;
+    padding: 2px 6px;
+}
+
+.ws-delete-image:hover {
+    background: rgba(0, 0, 0, 0.7);
 }
 
 /* 错误信息样式 */
 #ws_image_message {
+    margin-top: 10px;
+    padding: 10px;
     font-size: 14px;
-    color: red;
-    margin-top: 2px;
+    border-radius: 4px;
+    display: none;
 }
 
+#ws_image_message.success-message {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
 
+#ws_image_message.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* 正在上传提示 */
+#ws-uploading-message {
+    display:none;
+    font-size: 16px;
+    color: #333;
+    padding: 10px;
+    background: #f0f0f0;
+    border-radius: 5px;
+    text-align: center;
+}
+/* 上传图片区域 - 结束 */
+
+/* b站视频 */
+.ws-bilibili-iframe {
+    border-radius: 8px;
+}
+
+/* b站视频 */
+.player-mid .mask {
+    border-radius: 8px;
+}
+
+.player-mid {
+    border-radius: 8px;
+}
 
 /* 屏幕小于1024px时隐藏右侧和左侧边栏 */
 @media (max-width: 1024px) {
