@@ -3,7 +3,7 @@
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论，白名单等常规设置。
- * Version: 1.8
+ * Version: 1.9
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -829,7 +829,6 @@ function ws_weibo_process_content_bilibili_videos($content) {
 // 检测网易云音乐链接并生成播放器
 function ws_weibo_parse_netease_music($content) {
     $content = preg_replace_callback(
-        //'/https?:\/\/music\.163\.com\/#\/song\?id=(\d+)/',
         '/https?:\/\/music\.163\.com\/(?:#\/)?song\?id=(\d+)(?:&.*)?/',
         function ($matches) {
             $song_id = $matches[1]; // 提取歌曲ID
@@ -841,6 +840,7 @@ function ws_weibo_parse_netease_music($content) {
 
     return $content;
 }
+
 
 
 //获取当前用户微博数量
@@ -1148,23 +1148,26 @@ function ws_weibo_frontend_page() {
                     ?>
 
         <!-- 发布微博表单 -->
-        <form action="" method="post" id="ws_weibo_form" enctype="multipart/form-data">
-            <?php wp_nonce_field('ws_weibo_post_action', 'ws_weibo_post_nonce'); ?>
-            <textarea name="ws_weibo_content" placeholder="发布你的心情..." required></textarea><br>
+            <form action="" method="post" id="ws-weibo-form">
+                <?php wp_nonce_field('ws_weibo_post_action', 'ws_weibo_post_nonce'); ?>
+                <textarea name="ws_weibo_content" placeholder="发布你的心情..." required></textarea><br>
 
-            <?php if (!$disable_upload_image) : ?>
-                <!-- 上传区域的容器 -->
-                <div class="ws-weibo-upload-area">
-                    <label for="ws_weibo_image" class="custom-upload-btn">选择图片</label>
-                    <input type="file" name="ws_weibo_image" id="ws_weibo_image" accept="image/*"><br>
-                    <div id="ws_image_message"></div>
-                    <!-- 图片预览 -->
-                    <div id="ws_image_preview"></div>
+                <?php if (!$disable_upload_image) : ?>
+                <!-- 图片上传部分 -->
+                <div class="ws-image-upload-container">
+                    <!-- 隐藏浏览器默认文件输入框 -->
+                    <input type="file" id="ws-image-upload" name="ws_images[]" accept=".jpg, .jpeg, .png, .gif, .webp" multiple style="display:none;">
+                    <!-- 自定义按钮触发文件选择 -->
+                    <button type="button" id="ws-select-images-button">选择图片</button>
+                    <button type="button" id="ws-add-more-images" style="display:none;">继续添加</button>
+                    <div id="ws-uploading-message">正在上传中...</div>
+                    <div id="ws_image_message" style="display:none;"></div>
+                    <div id="ws-image-preview-container"></div>
                 </div>
             <?php endif; ?>
 
-            <input type="submit" name="ws_weibo_submit" value="发布">
-        </form>
+                <input type="submit" name="ws_weibo_submit" value="发布">
+            </form>
                     <?php
                 }
             }
@@ -1523,53 +1526,183 @@ function ws_weibo_frontend_page() {
     });
 });
         // 图片上传区域
-        $('#ws_weibo_image').on('change', function () {
-            var file = this.files[0];
-            var validFormats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']; // 支持的图片格式
-            var maxSize = 2 * 1024 * 1024; // 最大文件大小 2MB
+        var allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];  // 允许的文件格式
+        var imageUrls = []; // 存储已上传的图片URL
 
-            // 消息显示
-            var messageContainer = $('#ws_image_message');
+        // 点击自定义按钮时触发文件输入框
+        $('#ws-select-images-button').on('click', function() {
+            $('#ws-image-upload').click();  // 触发隐藏的文件输入框
+        });
 
-            // 清空消息
-            messageContainer.text('');
+        // 选择文件后检查文件格式
+        $('#ws-image-upload').on('change', function(event) {
+            var files = event.target.files;
+            if (files.length > 0) {
+            // 检查文件类型
+            var invalidFiles = [];
+            $.each(files, function(index, file) {
+                if (!allowedMimeTypes.includes(file.type)) {
+                    invalidFiles.push(file.name);
+                }
+            });
 
-            // 检查图片格式
-            if ($.inArray(file.type, validFormats) === -1) {
-                messageContainer.text('只允许上传 JPG, PNG, GIF, WebP 格式的图片。');
-                $(this).val(''); // 清除文件输入框
-                return;
+            if (invalidFiles.length > 0) {
+                // 显示错误提示
+                $('#ws_image_message').text('不支持的文件格式: ' + invalidFiles.join(', ') + '. 只支持JPG、JPEG、PNG、GIF、WebP格式。').removeClass().addClass('error-message').show();
+                // 清空选择的文件
+                $('#ws-image-upload').val('');
+            } else {
+                // 没有无效文件，继续处理图片上传
+                handleImageUpload(files);
             }
+        }
+    });
 
-            // 检查图片大小
-            if (file.size > maxSize) {
-                messageContainer.text('图片大小不能超过 5MB。');
-                $(this).val(''); // 清除文件输入框
-                return;
+    // 继续添加按钮
+    $('#ws-add-more-images').on('click', function() {
+        $('#ws-image-upload').click();
+    });
+
+    // 图片上传处理函数
+    function handleImageUpload(files) {
+        var formData = new FormData();
+        for (var i = 0; i < files.length; i++) {
+            formData.append('files[]', files[i]);
+        }
+        formData.append('action', 'ws_weibo_handle_image_upload');
+        formData.append('security', '<?php echo wp_create_nonce("image_upload_nonce"); ?>');
+
+        // 显示“正在上传中”提示
+        $('#ws-uploading-message').show();
+
+        // 清空之前的消息
+        $('#ws_image_message').hide().text('');
+
+        $.ajax({
+            url: '<?php echo admin_url('admin-ajax.php'); ?>',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                // 隐藏“正在上传中”提示
+                $('#ws-uploading-message').hide();
+
+                if (response.success) {
+                    response.data.files.forEach(function(file) {
+                        imageUrls.push(file.url);
+                        displayImagePreview(file.url);
+                    });
+                    $('#ws-add-more-images').show();
+                } else {
+                    $('#ws_image_message').text('图片上传失败: ' + response.data.message).removeClass().addClass('error-message').show();
+                }
+            },
+            error: function() {
+                // 隐藏“正在上传中”提示
+                $('#ws-uploading-message').hide();
+                $('#ws_image_message').text('上传图片时出现错误').removeClass().addClass('error-message').show();
             }
+        });
+    }
 
-            // 图片预览
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                $('#ws_image_preview').html('<img src="' + e.target.result + '" style="max-width: 100px; max-height: 100px;">');
-            };
-            reader.readAsDataURL(file);
-        });      
-});
-        </script>
+    // 显示图片预览
+    function displayImagePreview(url) {
+        var previewHtml = `
+        <div class="ws-image-preview-item">
+            <img src="${url}" alt="Image Preview" class="ws-image-preview" />
+            <button class="ws-delete-image" onclick="removeImagePreview(this)">×</button>
+        </div>`;
+        $('#ws-image-preview-container').append(previewHtml);
+    }
+
+    // 删除图片预览
+    window.removeImagePreview = function(button) {
+        $(button).closest('.ws-image-preview-item').remove();
+        // 从imageUrls数组中移除已删除图片的URL
+        var index = imageUrls.indexOf($(button).prev().attr('src'));
+        if (index !== -1) {
+            imageUrls.splice(index, 1);
+        }
+    }
+    
+    // 提交表单时将图片链接添加到微博内容中
+    $('#ws-weibo-form').on('submit', function() {
+        var content = $("textarea[name='ws_weibo_content']").val();
+        imageUrls.forEach(function(url) {
+            content += `\n${url}`; // 将图片URL添加到微博内容中
+            });
+            $("textarea[name='ws_weibo_content']").val(content);
+        }); 
+    });
+</script>
+</div>
+    <!-- 右侧边栏 -->
+    <?php if (is_active_sidebar('ws_weibo_feeling_sidebar')): ?>
+        <div class="ws-feeling-sidebar">
+            <?php dynamic_sidebar('ws_weibo_feeling_sidebar'); ?>
         </div>
-                <!-- 右侧边栏 -->
-        <?php if (is_active_sidebar('ws_weibo_feeling_sidebar')): ?>
-            <div class="ws-feeling-sidebar">
-                <?php dynamic_sidebar('ws_weibo_feeling_sidebar'); ?>
-            </div>
-        <?php endif; ?>
-    </div>
+    <?php endif; ?>
+</div>
 
     <?php
     return ob_get_clean();
 }
 add_shortcode('ws_weibo_feeling', 'ws_weibo_frontend_page');
+
+
+// 处理图片上传的AJAX请求
+function ws_weibo_handle_image_upload() {
+    if (!isset($_FILES['files']) || empty($_FILES['files']['name'][0])) {
+        wp_send_json_error(['message' => '没有选择文件']);
+    }
+
+    $uploaded_files = [];
+    $allowed_mime_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']; // 限制文件格式
+
+    foreach ($_FILES['files']['name'] as $key => $file_name) {
+        $file = [
+            'name'     => $file_name,
+            'type'     => $_FILES['files']['type'][$key],
+            'tmp_name' => $_FILES['files']['tmp_name'][$key],
+            'error'    => $_FILES['files']['error'][$key],
+            'size'     => $_FILES['files']['size'][$key],
+        ];
+
+        // 检查文件格式
+        if (!in_array($file['type'], $allowed_mime_types)) {
+            wp_send_json_error(['message' => '不支持的文件格式。只支持JPG、JPEG、PNG、GIF、WebP格式。']);
+        }
+
+        $upload = wp_handle_upload($file, ['test_form' => false]);
+        if (isset($upload['error'])) {
+            wp_send_json_error(['message' => $upload['error']]);
+        }
+
+        // 生成附件
+        $file_url = $upload['url'];
+        $attachment = [
+            'guid' => $file_url,
+            'post_mime_type' => wp_check_filetype($upload['file'])['type'],
+            'post_title' => sanitize_file_name(basename($upload['file'])),
+            'post_content' => '',
+            'post_status' => 'inherit',
+        ];
+        $attachment_id = wp_insert_attachment($attachment, $upload['file']);
+        if (!is_wp_error($attachment_id)) {
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+            $attachment_data = wp_generate_attachment_metadata($attachment_id, $upload['file']);
+            wp_update_attachment_metadata($attachment_id, $attachment_data);
+        }
+
+        $uploaded_files[] = ['url' => $file_url];
+    }
+
+    wp_send_json_success(['files' => $uploaded_files]);
+}
+
+add_action('wp_ajax_ws_weibo_handle_image_upload', 'ws_weibo_handle_image_upload');
+add_action('wp_ajax_nopriv_ws_weibo_handle_image_upload', 'ws_weibo_handle_image_upload');
 
 
 // 获取用户组发布微博
@@ -1584,7 +1717,6 @@ function ws_weibo_extend_post_capabilities() {
     }
     return false;
 }
-
 
 // 处理前台发布微博
 function ws_weibo_handle_frontend_post() {
@@ -1603,67 +1735,9 @@ function ws_weibo_handle_frontend_post() {
             wp_die('你已被禁止发布微博和评论。');
         }
 
-        // 获取微博内容
         $content = sanitize_text_field($_POST['ws_weibo_content']);
-
-        // 处理上传的图片
-        $attachment_url = '';
-        if (isset($_FILES['ws_weibo_image']) && !empty($_FILES['ws_weibo_image']['name'])) {
-            $file = $_FILES['ws_weibo_image'];
-            $file_type = wp_check_filetype($file['name']);
-            $file_size = $file['size'];
-            $valid_formats = ['jpg', 'jpeg', 'png', 'gif', 'webp']; // 支持的图片格式
-            $max_size = 2 * 1024 * 1024; // 最大文件大小 2MB
-
-            // 验证图片格式
-            if (!in_array(strtolower($file_type['ext']), $valid_formats)) {
-                // 返回错误信息
-                set_transient('ws_weibo_image_error', '只允许上传 JPG, PNG, GIF, WebP 格式的图片。', 30);
-                wp_safe_redirect(remove_query_arg(['ws_weibo_message', 'success'], wp_get_referer()));
-                exit;
-            }
-
-            // 验证图片大小
-            if ($file_size > $max_size) {
-                // 返回错误信息
-                set_transient('ws_weibo_image_error', '图片大小不能超过 2MB。', 30);
-                wp_safe_redirect(remove_query_arg(['ws_weibo_message', 'success'], wp_get_referer()));
-                exit;
-            }
-
-            // 上传图片到媒体库
-            $upload = wp_handle_upload($file, ['test_form' => false]);
-
-            if (isset($upload['url'])) {
-                // 图片上传成功，获取图片URL
-                $attachment_url = $upload['url'];
-
-                // 将图片插入到媒体库
-                $wp_filetype = wp_check_filetype($upload['file'], null);
-                $attachment = array(
-                    'guid' => $upload['url'], 
-                    'post_mime_type' => $wp_filetype['type'],
-                    'post_title' => preg_replace('/\.[^.]+$/', '', basename($upload['file'])),
-                    'post_content' => '',
-                    'post_status' => 'inherit'
-                );
-
-                // 插入数据库
-                $attachment_id = wp_insert_attachment($attachment, $upload['file']);
-
-                // 生成元数据
-                require_once(ABSPATH . 'wp-admin/includes/image.php');
-                $attachment_data = wp_generate_attachment_metadata($attachment_id, $upload['file']);
-                wp_update_attachment_metadata($attachment_id, $attachment_data);
-            }
-        }
-
-        // 如果有图片，添加到内容中
-        if ($attachment_url) {
-            $content .= '<img src="' . esc_url($attachment_url) . '" alt="微心情图片">';
-        }
-
-        // 插入数据到数据库
+        
+        // 插入数据
         $wpdb->insert($table_name, [
             'user_id' => get_current_user_id(),
             'content' => $content,
@@ -1678,7 +1752,6 @@ function ws_weibo_handle_frontend_post() {
         exit;
     }
 }
-
 add_action('init', 'ws_weibo_handle_frontend_post');
 
 
