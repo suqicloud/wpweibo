@@ -1527,6 +1527,7 @@ function ws_weibo_frontend_page() {
 });
         // 图片上传区域
         var allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];  // 允许的文件格式
+        var maxFileSize = 2 * 1024 * 1024;  // 2MB
         var imageUrls = []; // 存储已上传的图片URL
 
         // 点击自定义按钮时触发文件输入框
@@ -1536,21 +1537,26 @@ function ws_weibo_frontend_page() {
 
         // 选择文件后检查文件格式
         $('#ws-image-upload').on('change', function(event) {
-            var files = event.target.files;
-            if (files.length > 0) {
-            // 检查文件类型
+        var files = event.target.files;
+        if (files.length > 0) {
+            // 检查文件格式和大小
             var invalidFiles = [];
+            var largeFiles = [];
             $.each(files, function(index, file) {
                 if (!allowedMimeTypes.includes(file.type)) {
                     invalidFiles.push(file.name);
                 }
+                if (file.size > maxFileSize) {
+                    largeFiles.push(file.name);
+                }
             });
 
             if (invalidFiles.length > 0) {
-                // 显示错误提示
                 $('#ws_image_message').text('不支持的文件格式: ' + invalidFiles.join(', ') + '. 只支持JPG、JPEG、PNG、GIF、WebP格式。').removeClass().addClass('error-message').show();
-                // 清空选择的文件
-                $('#ws-image-upload').val('');
+                $('#ws-image-upload').val('');  // 清空选择的文件
+            } else if (largeFiles.length > 0) {
+                $('#ws_image_message').text('文件过大: ' + largeFiles.join(', ') + '. 只支持最大2MB的图片。').removeClass().addClass('error-message').show();
+                $('#ws-image-upload').val('');  // 清空选择的文件
             } else {
                 // 没有无效文件，继续处理图片上传
                 handleImageUpload(files);
@@ -1610,7 +1616,7 @@ function ws_weibo_frontend_page() {
     function displayImagePreview(url) {
         var previewHtml = `
         <div class="ws-image-preview-item">
-            <img src="${url}" alt="Image Preview" class="ws-image-preview" />
+            <img src="${url}" alt="微心情" class="ws-image-preview" />
             <button class="ws-delete-image" onclick="removeImagePreview(this)">×</button>
         </div>`;
         $('#ws-image-preview-container').append(previewHtml);
@@ -1659,6 +1665,7 @@ function ws_weibo_handle_image_upload() {
 
     $uploaded_files = [];
     $allowed_mime_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']; // 限制文件格式
+    $max_file_size = 2 * 1024 * 1024; // 最大2MB
 
     foreach ($_FILES['files']['name'] as $key => $file_name) {
         $file = [
@@ -1674,6 +1681,11 @@ function ws_weibo_handle_image_upload() {
             wp_send_json_error(['message' => '不支持的文件格式。只支持JPG、JPEG、PNG、GIF、WebP格式。']);
         }
 
+        // 检查文件大小
+        if ($file['size'] > $max_file_size) {
+            wp_send_json_error(['message' => '文件过大。请确保文件大小不超过2MB。']);
+        }
+        
         $upload = wp_handle_upload($file, ['test_form' => false]);
         if (isset($upload['error'])) {
             wp_send_json_error(['message' => $upload['error']]);
