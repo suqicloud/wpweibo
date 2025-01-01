@@ -1639,7 +1639,17 @@ function ws_weibo_frontend_page() {
             content += `\n${url}`; // 将图片URL添加到微博内容中
             });
             $("textarea[name='ws_weibo_content']").val(content);
-        }); 
+        });
+
+    // 等待所有图片加载完成后执行 图片高度超过1000px
+    $('.ws-image-row-1 img').each(function() {
+        var imgHeight = $(this)[0].naturalHeight;  // 获取图片的原始高度
+        if (imgHeight > 1000) {
+            // 强制设置图片高度为50vh !important
+            $(this)[0].style.setProperty('height', '50vh', 'important');
+        }
+    });
+
     });
 </script>
 </div>
