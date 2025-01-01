@@ -193,7 +193,7 @@ body {
 
 .ws-image-row img {
     width: 100% !important; /* 图片默认宽度为100% */
-    height: auto !important; /* 保持图片的原始比例 */
+    height: auto; /* 保持图片的原始比例 */
     display: block; /* 避免img下面出现空白缝隙 */
     margin: 2px !important; /* 给图片之间增加一点间距 */
     border-radius: 8px;
@@ -201,6 +201,11 @@ body {
 
 .ws-image-row-1 img {
     width: 99% !important;
+}
+
+/* 图片超过1000px高度50% */
+.ws-image-row-1 img.over-1000px {
+    height: 50vh !important;
 }
 
 .ws-image-row-2 img {
