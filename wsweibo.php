@@ -71,6 +71,14 @@ function get_real_ip_address() {
     return $ip;
 }
 
+// 插件列表页面添加设置入口
+function ws_weibo_add_settings_link($links) {
+    $settings_link = '<a href="admin.php?page=ws_weibo_weibo_settings">设置</a>';
+    array_unshift($links, $settings_link);
+    return $links;
+}
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ws_weibo_add_settings_link');
+
 // 插件激活时创建前台页面
 function ws_weibo_create_feeling_page_on_activation() {
     // 检查是否已有页面存在
