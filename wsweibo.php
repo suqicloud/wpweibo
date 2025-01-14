@@ -3,7 +3,7 @@
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论，白名单等常规设置。
- * Version: 1.9
+ * Version: 2.0
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -78,6 +78,7 @@ function ws_weibo_add_settings_link($links) {
     return $links;
 }
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ws_weibo_add_settings_link');
+
 
 // 插件激活时创建前台页面
 function ws_weibo_create_feeling_page_on_activation() {
@@ -176,6 +177,9 @@ function ws_weibo_weibo_settings_page() {
         // 关闭上传图片
         $disable_upload_image = isset($_POST['disable_upload_image']) ? true : false;
 
+        // 左侧边栏随机文章
+        $show_random_articles = isset($_POST['show_random_articles']) ? true : false;
+
         // 保存设置
         $settings = array(
             'start_time' => $start_time,  //开始时间
@@ -210,6 +214,9 @@ function ws_weibo_weibo_settings_page() {
         update_option('ws_weibo_allowed_roles', $allowed_roles);
         //更新无权发布微博的自定义提示内容
         update_option('ws_weibo_unauthorized_message', $unauthorized_message);
+
+        //左侧边栏随机文章
+        update_option('ws_weibo_show_random_articles', $show_random_articles);
 
         echo "<div class='updated'><p>微博设置已更新。</p></div>";
 
@@ -311,6 +318,10 @@ function ws_weibo_weibo_settings_page() {
 
             <input type="checkbox" name="disable_upload_image" id="disable_upload_image" <?php checked($current_settings['disable_upload_image'], true); ?>>
             <label for="disable_upload_image">关闭前台用户上传图片功能</label>
+            <br><br>
+
+            <input type="checkbox" name="show_random_articles" id="show_random_articles" <?php checked(get_option('ws_weibo_show_random_articles', false), true); ?>>
+            <label for="show_random_articles">左侧边栏显示5篇随机文章</label>
             <br><br>
 
 
@@ -970,7 +981,22 @@ class ws_weibo_Feeling_Left_Ad_Widget extends WP_Widget {
             echo '<div class="ws-left-advertisement">' . wpautop($left_sidebar_advertisement) . '</div>';
         }
 
-        
+        // 如果启用随机文章，显示5篇随机文章
+        if (get_option('ws_weibo_show_random_articles', false)) {
+            $random_posts = get_posts(array(
+                'numberposts' => 5, 
+                'orderby' => 'rand',
+                'post_status' => 'publish',
+            ));
+            if (!empty($random_posts)) {
+                echo '<div class="ws-random-articles"><h3>随机文章推荐：</h3><ul class="ws-random-list">';
+                foreach ($random_posts as $post) {
+                    echo '<li class="ws-random-item"><a href="' . get_permalink($post->ID) . '" target="_blank">' . esc_html($post->post_title) . '</a></li>';
+                }
+                echo '</ul></div>';
+            }
+        }
+
         // 如果启用了历史上的今天，显示一个随机事件
         if ($enable_history_today && !empty($history_today_api_key)) {
             $random_event = ws_weibo_get_random_history_today($history_today_api_key);
