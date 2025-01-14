@@ -918,6 +918,57 @@ body {
     border-radius: 8px;
 }
 
+/* 随机文章板块 */
+.ws-random-articles {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.ws-random-articles h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+/* 更高优先级的样式规则 */
+.ws-random-articles ul.ws-random-list {
+    list-style: none !important;
+    padding: 0;
+    margin: 0;
+}
+
+.ws-random-articles li.ws-random-item {
+    list-style: none !important;
+    margin-bottom: 8px;
+}
+
+.ws-random-articles li.ws-random-item:last-child {
+    margin-bottom: 0;
+}
+
+.ws-random-articles a {
+    text-decoration: none !important;
+    color: #0073aa;
+    font-size: 14px;
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.3s;
+}
+
+.ws-random-articles a:hover {
+    color: #005177;
+    text-decoration: underline;
+}
+
 /* 屏幕小于1024px时隐藏右侧和左侧边栏 */
 @media (max-width: 1024px) {
     .ws-wbwrap {
