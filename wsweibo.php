@@ -3,7 +3,7 @@
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论，白名单等常规设置。
- * Version: 2.0
+ * Version: 2.6
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -180,6 +180,22 @@ function ws_weibo_weibo_settings_page() {
         // 左侧边栏随机文章
         $show_random_articles = isset($_POST['show_random_articles']) ? true : false;
 
+        // 背景颜色
+        $background_color = sanitize_hex_color($_POST['background_color']);
+
+        // 联系方式
+        $qq_number = sanitize_text_field($_POST['qq_number']);
+        $custom_icon_url = esc_url_raw($_POST['custom_icon_url']);
+        $city_name = sanitize_text_field($_POST['city_name']);
+        $email_number = sanitize_text_field($_POST['email_number']);
+        $bilibili_url = esc_url_raw($_POST['bilibili_url']);
+        $bilibili_text = sanitize_text_field($_POST['bilibili_text']);
+        $weibo_url = esc_url_raw($_POST['weibo_url']);
+        $xiaohongshu_url = esc_url_raw($_POST['xiaohongshu_url']);
+        $douyin_url = esc_url_raw($_POST['douyin_url']);
+        $wangyiyun_url = esc_url_raw($_POST['wangyiyun_url']);        
+        $weixin_qrcode_url = esc_url_raw($_POST['weixin_qrcode_url']);
+
         // 保存设置
         $settings = array(
             'start_time' => $start_time,  //开始时间
@@ -194,7 +210,7 @@ function ws_weibo_weibo_settings_page() {
             'disable_upload_image' => $disable_upload_image,  //关闭图片上传
             'left_sidebar_advertisement' => $left_sidebar_advertisement,  //左侧边栏内容
             'scroll_mode' => $scroll_mode,  //模式选择
-            'ws_weibo_frontend_title' => $ws_weibo_frontend_title  // 保存前台标题                    
+            'ws_weibo_frontend_title' => $ws_weibo_frontend_title  // 保存前台标题                
         );
 
         // 保存设置到数据库
@@ -217,6 +233,22 @@ function ws_weibo_weibo_settings_page() {
 
         //左侧边栏随机文章
         update_option('ws_weibo_show_random_articles', $show_random_articles);
+
+        //背景颜色
+        update_option('ws_weibo_background_color', $background_color);
+
+        //联系方式
+        update_option('ws_weibo_qq_number', $qq_number);
+        update_option('ws_weibo_custom_icon_url', $custom_icon_url);
+        update_option('ws_weibo_city_name', $city_name);
+        update_option('ws_weibo_email_number', $email_number);
+        update_option('ws_weibo_bilibili_url', $bilibili_url);
+        update_option('ws_weibo_bilibili_text', $bilibili_text);
+        update_option('ws_weibo_weibo_url', $weibo_url);
+        update_option('ws_weibo_xiaohongshu_url', $xiaohongshu_url);
+        update_option('ws_weibo_douyin_url', $douyin_url);
+        update_option('ws_weibo_wangyiyun_url', $wangyiyun_url);
+        update_option('ws_weibo_weixin_qrcode_url', $weixin_qrcode_url); 
 
         echo "<div class='updated'><p>微博设置已更新。</p></div>";
 
@@ -245,7 +277,23 @@ function ws_weibo_weibo_settings_page() {
     $posts_per_page = get_option('ws_weibo_posts_per_page', 20);
     $allowed_roles = get_option('ws_weibo_allowed_roles', []);
     $current_unauthorized_message = get_option('ws_weibo_unauthorized_message', '');
-    
+
+    // 默认背景颜色
+    $background_color = get_option('ws_weibo_background_color', '#fff');
+
+    // 联系方式
+    $qq_number = get_option('ws_weibo_qq_number', '');
+    $custom_icon_url = get_option('ws_weibo_custom_icon_url', '');
+    $city_name = get_option('ws_weibo_city_name', '');
+    $email_number = get_option('ws_weibo_email_number', '');
+    $bilibili_url = get_option('ws_weibo_bilibili_url', '');
+    $bilibili_text = get_option('ws_weibo_bilibili_text', '');
+    $weibo_url = get_option('ws_weibo_weibo_url', '');
+    $xiaohongshu_url = get_option('ws_weibo_xiaohongshu_url', '');
+    $douyin_url = get_option('ws_weibo_douyin_url', '');
+    $wangyiyun_url = get_option('ws_weibo_wangyiyun_url', '');
+    $weixin_qrcode_url = get_option('ws_weibo_weixin_qrcode_url', '');
+
     ?>
     <style>
         /* 设置页面样式 */
@@ -307,9 +355,9 @@ function ws_weibo_weibo_settings_page() {
             <input type="text" name="ws_weibo_frontend_title" value="<?php echo esc_attr($current_settings['ws_weibo_frontend_title']); ?>" placeholder="输入前台页面标题" style="width: 100%; max-width: 500px; padding: 5px;">
             <br><br>
 
-            <h3>隐藏选项</h3>
+            <h3>其他选项</h3>
             <input type="checkbox" name="hide_user_statistics" id="hide_user_statistics" <?php checked($current_settings['hide_user_statistics'], true); ?>>
-            <label for="hide_user_statistics">隐藏前台用户统计板块</label>
+            <label for="hide_user_statistics">关闭前台用户统计板块</label>
             <br><br>
 
             <input type="checkbox" name="close_comments" id="close_comments" <?php checked($current_settings['close_comments'], true);?>>
@@ -349,6 +397,9 @@ function ws_weibo_weibo_settings_page() {
                 <option value="fixed" <?php selected($current_settings['scroll_mode'], 'fixed'); ?>>固定模式</option>
             </select>
             <br><br>
+            <label for="background_color">主框架背景颜色：</label>
+            <input type="text" name="background_color" id="background_color" value="<?php echo esc_attr($background_color); ?>" placeholder="例如：#faf8ff" style="width: 100%; max-width: 100px;">
+            <br><br>
 
             <h3>微博列表板块样式</h3>
             <label for="ws_weibo_container_max_width">最大宽度 (max-width)：</label>
@@ -380,12 +431,46 @@ function ws_weibo_weibo_settings_page() {
             <textarea name="ws_weibo_unauthorized_message" id="ws_weibo_unauthorized_message" rows="5" cols="100" placeholder="输入提示内容"><?php echo esc_textarea($current_unauthorized_message);?></textarea>
             <br><br>
 
+            <h3>联系方式</h3>
+            <label for="qq_number">QQ号:</label>
+            <input type="text" name="qq_number" value="<?php echo esc_attr($qq_number); ?>" placeholder="请输入QQ号" style="width: 100%; max-width: 200px;">
+            <br><br>
+            <label for="city_name">城市:</label>
+            <input type="text" name="city_name" value="<?php echo esc_attr($city_name); ?>" placeholder="请输入城市名称" style="width: 100%; max-width: 100px;">
+            <br><br>
+            <label for="email_number">邮箱:</label>
+            <input type="text" name="email_number" value="<?php echo esc_attr($email_number); ?>" placeholder="请输入邮箱" style="width: 100%; max-width: 200px;">
+            <br><br>            
+            <label for="bilibili_url">B站链接:</label>
+            <input type="text" name="bilibili_url" value="<?php echo esc_url($bilibili_url); ?>" placeholder="请输入B站链接" style="width: 100%; max-width: 500px;">
+            <br><br>
+            <label for="bilibili_text">B站链接文本:</label>
+            <input type="text" name="bilibili_text" value="<?php echo esc_attr($bilibili_text); ?>" placeholder="请输入B站显示文本" style="width: 100%; max-width: 200px;">
+            <br><br>
+            <label for="weibo_url">微博链接:</label>
+            <input type="text" name="weibo_url" value="<?php echo esc_url($weibo_url); ?>" placeholder="请输入微博链接" style="width: 100%; max-width: 500px;">
+            <br><br>
+            <label for="xiaohongshu_url">小红书链接:</label>
+            <input type="text" name="xiaohongshu_url" value="<?php echo esc_url($xiaohongshu_url); ?>" placeholder="请输入小红书链接" style="width: 100%; max-width: 500px;">
+            <br><br>            
+            <label for="douyin_url">抖音链接:</label>
+            <input type="text" name="douyin_url" value="<?php echo esc_url($douyin_url); ?>" placeholder="请输入抖音链接" style="width: 100%; max-width: 500px;">
+            <br><br>
+            <label for="wangyiyun_url">网易云音乐链接:</label>
+            <input type="text" name="wangyiyun_url" value="<?php echo esc_url($wangyiyun_url); ?>" placeholder="请输入网易云音乐链接" style="width: 100%; max-width: 500px;">
+            <br><br>
+            <label for="weixin_qrcode_url">微信二维码图片地址:</label>
+            <input type="text" name="weixin_qrcode_url" value="<?php echo esc_url($weixin_qrcode_url); ?>" placeholder="请输入微信二维码图片地址" style="width: 100%; max-width: 500px;">
+            <br><br>                                                
+            <label for="custom_icon_url">iconfont自定义图标样式链接:</label>
+            <input type="text" name="custom_icon_url" value="<?php echo esc_attr($custom_icon_url); ?>" placeholder="请输入CSS链接" style="width: 100%; max-width: 500px;">
+            <br><br>
+
             <input type="submit" name="submit_weibo_settings" value="保存设置" class="button-primary">
         </form>
         <p>1、公告和广告内容支持常见的HTML代码，所以添加广告图片、文字什么的都行。<br>2、侧边栏需要到网站小工具去添加，里面有一个微博右侧边栏、微博左侧边栏以及右侧边栏微博公告和广告、左侧边栏广告推荐的小工具，添加过去就行。<br>3、2个侧边栏都添加就是3栏模式，如果你只添加一个侧边栏，建议添加右侧边栏。<br>
         4、滚动模式 - 中间微博板块可以滑动，侧边栏单独固定在浏览器上，固定模式 - 不能滑动，全部固定。<br>
-        5、微博列表板块按需设置吧，根据和你的主题页面属性。<br>
-    6、设置不允许发布微博的用户组之后，但是他们依旧可以评论，写点提示内容，可以当留言板用（只有被封禁的用户，才不能评论）。</p>
+        5、微博列表板块按需设置吧，根据和你的主题页面属性。<br>6、设置不允许发布微博的用户组之后，但是他们依旧可以评论，写点提示内容，可以当留言板用（只有被封禁的用户，才不能评论）。<br>7、iconfont自定义图标样式链接必须要填写，不然前面就不显示对应的图标，参考教程：https://www.wujiit.com/iconfont</p>
     </div>
     <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -401,6 +486,16 @@ function ws_weibo_weibo_settings_page() {
 }
 //上面分别用了常量(时间发布/隐藏用户/评论)、直接存储(侧边栏内容)、数组存储(主框架/模式)3种代码方式，因为我在测试,不影响使用
 
+// 前台背景颜色
+function ws_weibo_apply_background_color() {
+    $background_color = get_option('ws_weibo_background_color', '#fff');
+    echo "<style>
+        .ws-container, .ws-feeling-sidebar, .ws-feeling-left-sidebar {
+            background-color: {$background_color};
+        }
+    </style>";
+}
+add_action('wp_head', 'ws_weibo_apply_background_color');
 
 // 前台微博页面主框架的样式
 function ws_weibo_custom_container_style() {
@@ -425,14 +520,13 @@ function ws_weibo_custom_container_style() {
             padding: {$padding};
             margin-left: {$left_margin};
             flex: 1;
-            background-color: #fff;
             border-radius: 10px;
             border: 1px solid #ddd;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             margin-left: 5px;
             margin-right: 5px;
             height: 100%;
-            overflow-y: auto; /* 主容器允许垂直滚动 */
+            overflow-y: auto;
         }
     ";
 
@@ -447,9 +541,9 @@ function ws_weibo_custom_container_style() {
             justify-content: space-between;
             box-sizing: border-box;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            position: relative; /* 侧边栏的滚动受控 */
-            height: 100vh; /* 高度为视口高度 */
-            overflow: auto; /* 允许滚动 */
+            position: relative;
+            height: 100vh;
+            overflow: auto;
             }
         ";
     } else {
@@ -463,7 +557,7 @@ function ws_weibo_custom_container_style() {
             box-sizing: border-box;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             position: relative;
-            overflow:  hidden; /* 不允许滚动 */
+            overflow:  hidden;
             }
         ";
     }
@@ -851,7 +945,7 @@ function ws_weibo_parse_netease_music($content) {
         '/https?:\/\/music\.163\.com\/(?:#\/)?song\?id=(\d+)(?:&.*)?/',
         function ($matches) {
             $song_id = $matches[1]; // 提取歌曲ID
-            $iframe = '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="//music.163.com/outchain/player?type=2&id=' . $song_id . '&auto=0&height=66"></iframe>';
+            $iframe = '<iframe class="ws-music-iframe" frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="//music.163.com/outchain/player?type=2&id=' . $song_id . '&auto=0&height=66"></iframe>';
             return $iframe; // 用iframe替换链接
         },
         $content
@@ -859,8 +953,6 @@ function ws_weibo_parse_netease_music($content) {
 
     return $content;
 }
-
-
 
 //获取当前用户微博数量
 function ws_weibo_get_user_weibo_count() {
@@ -902,7 +994,93 @@ class ws_weibo_Feeling_Announcement_Ad_Widget extends WP_Widget {
         $announcement = get_option('ws_weibo_weibo_announcement', '');
         $advertisement = get_option('ws_weibo_weibo_advertisement', '');
 
+        //联系方式
+        $qq_number = get_option('ws_weibo_qq_number', '');
+        $custom_icon_url = get_option('ws_weibo_custom_icon_url', '');
+        $city_name = get_option('ws_weibo_city_name', '');
+        $email_number = get_option('ws_weibo_email_number', '');
+        $bilibili_url = get_option('ws_weibo_bilibili_url', '');
+        $bilibili_text = get_option('ws_weibo_bilibili_text', '');
+        $weibo_url = get_option('ws_weibo_weibo_url', '');
+        $xiaohongshu_url = get_option('ws_weibo_xiaohongshu_url', '');
+        $douyin_url = get_option('ws_weibo_douyin_url', '');
+        $wangyiyun_url = get_option('ws_weibo_wangyiyun_url', '');
+        $weixin_qrcode_url = get_option('ws_weibo_weixin_qrcode_url', '');
+
+        //必应壁纸
+        $enable_bing_wallpaper = get_option('ws_weibo_enable_bing_wallpaper_option', false);
+
         echo $args['before_widget'];
+        
+        // 如果夜间模式启用，显示夜间模式开关
+        ws_weibo_night_mode();
+
+        
+        // 如果QQ号或其他填写了，加载自定义图标样式链接
+        if (!empty($qq_number) || !empty($city_name) || !empty($bilibili_url) || !empty($weibo_url) || !empty($douyin_url) || !empty($wangyiyun_url) || !empty($weixin_qrcode_url) || !empty($email_number) || !empty($xiaohongshu_url)) {
+            if (!empty($custom_icon_url)) {
+                echo '<link rel="stylesheet" href="' . esc_url($custom_icon_url) . '">';
+            }
+        }
+
+        // 显示信息
+        if (!empty($qq_number) || !empty($city_name) || !empty($bilibili_url) || !empty($weibo_url) || !empty($douyin_url) || !empty($wangyiyun_url) || !empty($weixin_qrcode_url) || !empty($email_number) || !empty($xiaohongshu_url)) {
+            echo $args['before_title'] . '联系' . $args['after_title'];
+            echo '<div class="ws-site-owner">';
+            // 城市名称
+            if (!empty($city_name)) {
+                echo '<div class="ws-site-city"><i class="iconfont icon-weizhi"></i> ' . esc_html($city_name) . '</div>';
+            }
+
+            // QQ号
+            if (!empty($qq_number)) {
+                echo '<div class="ws-site-qq"><i class="iconfont icon-qq"></i> ' . esc_html($qq_number) . '</div>';
+            }
+
+            // 邮箱
+            if (!empty($email_number)) {
+                echo '<div class="ws-site-email"><i class="iconfont icon-email"></i> ' . esc_html($email_number) . '</div>';
+            }
+
+            // B站
+            if (!empty($bilibili_url)) {
+                echo '<div class="ws-site-bilibili"><i class="iconfont icon-Bzhan"></i> <a href="' . esc_url($bilibili_url) . '" target="_blank">' . esc_html($bilibili_text) . '</a></div>';
+            }
+            
+            // 图标（微博、抖音、网易云音乐、微信）在同一排
+            echo '<div class="ws-social-icons">';    
+
+            // 微博使用微博图标作为链接
+            if (!empty($weibo_url)) {
+                echo '<div class="ws-site-weibo"><a href="' . esc_url($weibo_url) . '" target="_blank"><i class="iconfont icon-weibo"></i></a></div>';
+            }
+
+            // 小红书使用小红书图标作为链接
+            if (!empty($xiaohongshu_url)) {
+                echo '<div class="ws-site-xiaohongshu"><a href="' . esc_url($xiaohongshu_url) . '" target="_blank"><i class="iconfont icon-xiaohongshu"></i></a></div>';
+            }
+
+            // 抖音使用抖音图标作为链接
+            if (!empty($douyin_url)) {
+                echo '<div class="ws-site-douyin"><a href="' . esc_url($douyin_url) . '" target="_blank"><i class="iconfont icon-douyin"></i></a></div>';
+            }
+
+            // 网易云音乐使用网易云音乐图标作为链接
+            if (!empty($wangyiyun_url)) {
+                echo '<div class="ws-site-wangyiyun"><a href="' . esc_url($wangyiyun_url) . '" target="_blank"><i class="iconfont icon-wangyiyun"></i></a></div>';
+            }
+
+            // 微信图标和二维码
+            if (!empty($weixin_qrcode_url)) {
+                echo '<div class="ws-site-weixin">';
+                echo '<a href="javascript:void(0)" class="ws-weixin-icon"><i class="iconfont icon-weixin"></i></a>';
+                echo '<div class="ws-weixin-qrcode" style="display: none;"><img src="' . esc_url($weixin_qrcode_url) . '" alt="微信二维码"></div>';
+                echo '</div>';
+            }
+
+            echo '</div>';
+            echo '</div>';
+        }
 
         // 显示公告
         if (!empty($announcement)) {
@@ -916,7 +1094,17 @@ class ws_weibo_Feeling_Announcement_Ad_Widget extends WP_Widget {
             echo '<div class="ws-advertisement">' . wpautop($advertisement) . '</div>';
         }
 
+        // 显示必应壁纸
+        if ($enable_bing_wallpaper) {
+            $wallpaper_url = get_bing_wallpaper();
+            if ($wallpaper_url) {
+                echo $args['before_title'] . '壁纸' . $args['after_title'];
+                echo '<div class="ws-bing-wallpaper"><img src="' . esc_url($wallpaper_url) . '" alt="壁纸"></div>';
+            }
+        }
+        
         echo $args['after_widget'];
+
     }
 
     // 小工具后台设置
@@ -935,6 +1123,30 @@ function ws_weibo_register_announcement_ad_widget() {
     register_widget('ws_weibo_Feeling_Announcement_Ad_Widget');
 }
 add_action('widgets_init', 'ws_weibo_register_announcement_ad_widget');
+
+// 注册微博右侧边栏微信二维码
+function ws_weibo_weixin_qrcode_script() {
+    ?>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const weixinIcon = document.querySelector('.ws-weixin-icon');
+        const qrcode = document.querySelector('.ws-weixin-qrcode');
+
+        if (weixinIcon && qrcode) {
+            weixinIcon.addEventListener('mouseenter', function() {
+                qrcode.style.display = 'block';  // 显示二维码
+            });
+
+            weixinIcon.addEventListener('mouseleave', function() {
+                qrcode.style.display = 'none';  // 隐藏二维码
+            });
+        }
+    });
+    </script>
+    <?php
+}
+
+add_action('wp_footer', 'ws_weibo_weixin_qrcode_script');
 
 
 // 注册左边侧边栏微博小工具
@@ -972,9 +1184,35 @@ class ws_weibo_Feeling_Left_Ad_Widget extends WP_Widget {
         $enable_videos = get_option('ws_weibo_enable_videos_option', false);// 获取视频的设置
         $history_today_api_key = get_option('ws_weibo_history_today_api_key_option', ''); // 获取历史上的今天API Key
         $enable_history_today = get_option('ws_weibo_enable_history_today_option', false); // 获取历史上的今天设置
+        $weather_api_key = get_option('ws_weibo_weather_api_key_option', ''); // 获取天气api
+        $enable_weather = get_option('ws_weibo_enable_weather_option', false); // 获取天气显示的设置
 
         echo $args['before_widget'];
+        
+        // 显示天气
+        if ($enable_weather && !empty($weather_api_key)) {
+            echo '<div class="ws-weather">';
+            echo '<div id="tp-weather-widget"></div>';
+            echo '<script>
+            (function(a,h,g,f,e,d,c,b){b=function(){d=h.createElement(g);c=h.getElementsByTagName(g)[0];d.src=e;d.charset="utf-8";d.async=1;c.parentNode.insertBefore(d,c)};a["SeniverseWeatherWidgetObject"]=f;a[f]||(a[f]=function(){(a[f].q=a[f].q||[]).push(arguments)});a[f].l=+new Date();if(a.attachEvent){a.attachEvent("onload",b)}else{a.addEventListener("load",b,false)}}(window,document,"script","SeniverseWeatherWidget","//cdn.sencdn.com/widget2/static/js/bundle.js?t="+parseInt((new Date().getTime() / 100000000).toString(),10)));
+            window.SeniverseWeatherWidget(\'show\', {
+                flavor: "slim",
+                location: "WX4FBXXFKE4F",
+                geolocation: true,
+                language: "zh-Hans",
+                unit: "c",
+                theme: "light",
+                token: "' . esc_js($weather_api_key) . '",
+                hover: "enabled",
+                container: "tp-weather-widget"
+            })
+            </script>';
+            echo '</div>';
+        }
 
+        // 如果时钟开启就显示
+        ws_display_digital_clock();
+        
         // 显示左侧广告
         if (!empty($left_sidebar_advertisement)) {
             echo $args['before_title'] . '推荐' . $args['after_title'];
@@ -989,7 +1227,7 @@ class ws_weibo_Feeling_Left_Ad_Widget extends WP_Widget {
                 'post_status' => 'publish',
             ));
             if (!empty($random_posts)) {
-                echo '<div class="ws-random-articles"><h3>随机文章推荐：</h3><ul class="ws-random-list">';
+                echo '<div class="ws-random-articles"><h3>随机文章推荐</h3><ul class="ws-random-list">';
                 foreach ($random_posts as $post) {
                     echo '<li class="ws-random-item"><a href="' . get_permalink($post->ID) . '" target="_blank">' . esc_html($post->post_title) . '</a></li>';
                 }
