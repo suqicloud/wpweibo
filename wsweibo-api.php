@@ -336,6 +336,9 @@ function ws_weibo_night_mode() {
             .ws_night_mode .ws-random-articles,
             .ws_night_mode .ws-comment-section,
             .ws_night_mode .ws-feeling-sidebar,
+            .ws_night_mode .ws-history-today,
+            .ws_night_mode .ws-hot-videos,
+            .ws_night_mode .ws-random-joke,
             .ws_night_mode .ws-feeling-left-sidebar,
             .ws_night_mode .ws-announcement,
             .ws_night_mode form textarea {
