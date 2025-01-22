@@ -3,7 +3,7 @@
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论，白名单等常规设置。
- * Version: 2.6
+ * Version: 2.7
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -600,7 +600,7 @@ function ws_weibo_is_within_post_time() {
 
 
 // 微博内容图片链接处理
-function ws_weibo_process_content_images($content) { 
+function ws_weibo_process_content_images($content) {
     // 获取白名单的域名
     $whitelist_domains = get_option('ws_weibo_image_whitelist', []);
 
@@ -609,39 +609,30 @@ function ws_weibo_process_content_images($content) {
     preg_match_all($pattern, $content, $matches);
 
     if (!empty($matches[0])) {
-        $images = $matches[0]; // 获取所有图片链接
+        $images = $matches[0];
         $image_html = '<div class="ws-images">';
-
-        // 处理图片分组的函数
-        $process_images_group = function($image_group) use ($whitelist_domains) {
-            $group_html = '';
-            foreach ($image_group as $image) {
+        
+        // 如果只有一张图片，添加single-image类，主要为了判断超过1000px的图片
+        if (count($images) == 1) {
+            $image_html .= '<div class="ws-image-wrapper single-image"><img src="' . esc_url($images[0]) . '" alt="微心情动态说说" class="ws-image"></div>';
+        } else {
+            // 多张图片时不加single-image类
+            foreach ($images as $image) {
                 // 解析图片链接的域名
                 $parsed_url = parse_url($image);
                 $domain = isset($parsed_url['host']) ? $parsed_url['host'] : '';
 
                 // 检查图片链接是否在白名单内
                 if (in_array($domain, $whitelist_domains)) {
-                    $group_html .= '<img src="' . esc_url($image) . '" alt="微心情动态说说" class="ws-image">';
+                    $image_html .= '<div class="ws-image-wrapper"><img src="' . esc_url($image) . '" alt="微心情动态说说" class="ws-image"></div>';
                 } else {
-                    // 不在白名单内，显示图片链接
-                    $group_html .= '<p>' . esc_html($image) . '</p>';
+                    $image_html .= '<p>' . esc_html($image) . '</p>';
                 }
             }
-            return $group_html;
-        };
-
-        // 根据图片数量决定如何分组
-        $chunked_images = array_chunk($images, 3, true); // 按照每3张图片分组
-        foreach ($chunked_images as $index => $image_group) {
-            $row_class = (count($image_group) == 1) ? 'ws-image-row-1' : (count($image_group) == 2 ? 'ws-image-row-2' : 'ws-image-row-3');
-            $image_html .= '<div class="ws-image-row ' . $row_class . '">';
-            $image_html .= $process_images_group($image_group);  // 处理当前分组的图片
-            $image_html .= '</div>';
         }
 
         $image_html .= '</div>';
-
+        
         // 替换图片链接
         $content = preg_replace($pattern, '', $content); // 先去除原始图片链接
         $content .= $image_html; // 在最后添加图片显示的html
@@ -769,6 +760,9 @@ function ws_weibo_process_content_with_code_escape($content) {
 
     // wp_kses函数过滤内容
     $content = wp_kses($content, $allowed_tags);
+
+    // 将换行符转换为<br>标签
+    $content = nl2br($content);
 
     return $content;
 }
@@ -1015,7 +1009,6 @@ class ws_weibo_Feeling_Announcement_Ad_Widget extends WP_Widget {
         // 如果夜间模式启用，显示夜间模式开关
         ws_weibo_night_mode();
 
-        
         // 如果QQ号或其他填写了，加载自定义图标样式链接
         if (!empty($qq_number) || !empty($city_name) || !empty($bilibili_url) || !empty($weibo_url) || !empty($douyin_url) || !empty($wangyiyun_url) || !empty($weixin_qrcode_url) || !empty($email_number) || !empty($xiaohongshu_url)) {
             if (!empty($custom_icon_url)) {
@@ -1023,7 +1016,7 @@ class ws_weibo_Feeling_Announcement_Ad_Widget extends WP_Widget {
             }
         }
 
-        // 显示信息
+        // 显示联系信息
         if (!empty($qq_number) || !empty($city_name) || !empty($bilibili_url) || !empty($weibo_url) || !empty($douyin_url) || !empty($wangyiyun_url) || !empty($weixin_qrcode_url) || !empty($email_number) || !empty($xiaohongshu_url)) {
             echo $args['before_title'] . '联系' . $args['after_title'];
             echo '<div class="ws-site-owner">';
@@ -1074,7 +1067,10 @@ class ws_weibo_Feeling_Announcement_Ad_Widget extends WP_Widget {
             if (!empty($weixin_qrcode_url)) {
                 echo '<div class="ws-site-weixin">';
                 echo '<a href="javascript:void(0)" class="ws-weixin-icon"><i class="iconfont icon-weixin"></i></a>';
-                echo '<div class="ws-weixin-qrcode" style="display: none;"><img src="' . esc_url($weixin_qrcode_url) . '" alt="微信二维码"></div>';
+                echo '<div class="ws-weixin-qrcode" style="display: none;">';
+                // 添加class="no-lazy"确保二维码不受延迟加载影响
+                echo '<img src="' . esc_url($weixin_qrcode_url) . '" alt="微信二维码" class="no-lazy">';
+                echo '</div>';
                 echo '</div>';
             }
 
@@ -1147,7 +1143,6 @@ function ws_weibo_weixin_qrcode_script() {
 }
 
 add_action('wp_footer', 'ws_weibo_weixin_qrcode_script');
-
 
 // 注册左边侧边栏微博小工具
 function ws_weibo_register_feeling_left_sidebar() {
@@ -1317,7 +1312,7 @@ function ws_weibo_frontend_page() {
        
 ?>
 <div class="ws-wbwrap">
-            <!-- 左侧边栏 -->
+        <!-- 左侧边栏 -->
         <?php if (is_active_sidebar('ws_weibo_feeling_left_sidebar')): ?>
             <div class="ws-feeling-left-sidebar">
                 <?php dynamic_sidebar('ws_weibo_feeling_left_sidebar'); ?>
@@ -1389,7 +1384,6 @@ function ws_weibo_frontend_page() {
 
 
      <?php
-
      // 获取允许发布微博的用户权限设置
      $allowed_roles = get_option('ws_weibo_allowed_roles', []);
      // 获取当前登录用户的角色
@@ -1913,15 +1907,6 @@ function ws_weibo_frontend_page() {
             $("textarea[name='ws_weibo_content']").val(content);
         });
 
-    // 等待所有图片加载完成后执行 图片高度超过1000px
-    $('.ws-image-row-1 img').each(function() {
-        var imgHeight = $(this)[0].naturalHeight;  // 获取图片的原始高度
-        if (imgHeight > 1000) {
-            // 强制设置图片高度为50vh !important
-            $(this)[0].style.setProperty('height', '50vh', 'important');
-        }
-    });
-
     });
 </script>
 </div>
@@ -2029,7 +2014,10 @@ function ws_weibo_handle_frontend_post() {
             wp_die('你已被禁止发布微博和评论。');
         }
 
-        $content = sanitize_text_field($_POST['ws_weibo_content']);
+        $content = sanitize_textarea_field($_POST['ws_weibo_content']);
+        
+        // 将换行符转换为<br>标签
+        $content = nl2br($content);
         
         // 插入数据
         $wpdb->insert($table_name, [
@@ -2068,6 +2056,7 @@ function ws_weibo_uninstall() {
         'ws_weibo_enable_videos_option',
         'ws_weibo_history_today_api_key_option',
         'ws_weibo_enable_history_today_option',
+        'ws_weibo_weather_api_key_option',
         'ws_weibo_blocked_keywords',
         'ws_weibo_image_whitelist',
         'ws_weibo_unauthorized_message',
