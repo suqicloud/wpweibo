@@ -193,8 +193,8 @@ body {
 
 .ws-image-row img {
     width: 100% !important; /* 图片默认宽度为100% */
-    height: auto; /* 保持图片的原始比例 */
-    display: block; /* 避免img下面出现空白缝隙 */
+    height: auto;
+    display: block; /* 避免下面出现空白缝隙 */
     margin: 2px !important; /* 给图片之间增加一点间距 */
     border-radius: 8px;
 }
@@ -229,17 +229,17 @@ body {
 
 .ws-video {
     max-width: 100%; /* 保证视频不超过父元素宽度 */
-    height: auto; /* 高度自动调整 */
+    height: auto;
     border-radius: 8px;
     overflow: hidden; /* 防止视频溢出容器 */
     background-color: #000;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* 视频容器添加阴影 */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 /* 响应式视频样式 */
 .ws-video video {
-    width: 100%; /* 视频宽度自适应 */
-    height: auto; /* 保持视频比例 */
+    width: 100%;
+    height: auto;
     border-radius: 8px;
     display: block; /* 确保视频填充容器 */
 }
@@ -359,7 +359,7 @@ body {
     padding: 5px 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    background-color: #f9f9f9;
+    background-color: #fff;
     margin-bottom: 15px;
 }
 
@@ -462,21 +462,22 @@ body {
     top: 20px; /* 距离顶部的固定位置 */
 }
 
-.ws-feeling-sidebar .ws-announcement, 
-.ws-feeling-sidebar .ws-advertisement {
-    margin-bottom: 20px;
-    padding: 5px;
-    background-color: #f4f4f4;
+ /* 右侧栏公告板块 */
+.ws-feeling-sidebar .ws-announcement {
+    padding: 5px 10px;
+    padding-bottom: 1px;
     border: 1px solid #ddd;
     border-radius: 5px;
-}
-
-.ws-feeling-sidebar .ws-announcement {
     background-color: #e7f3e7;
 }
 
-.ws-feeling-sidebar .ws-advertisement {
-    background-color: #f9f9f9;
+/* 右侧边栏广告图片 */
+.ws-advertisement img {
+    border-radius: 10px;
+    overflow: hidden;
+    display: block;
+    width: 100%;
+    height: auto;
 }
 /* 右边侧边广告和公告样式 - 结束*/
 
@@ -491,6 +492,15 @@ body {
     position: sticky; /* 滚动时固定 */
     top: 20px; /* 距离顶部的固定位置 */    
 }
+
+/* 左侧边栏广告图片 */
+.ws-left-advertisement img {
+    border-radius: 10px;
+    overflow: hidden;
+    display: block;
+    width: 100%;
+    height: auto;
+}
 /* 侧边样式 - 结束 */
 
 /* 评论区域样式 */
@@ -501,7 +511,7 @@ body {
     font-size: 14px;
     padding: 5px;
     border-top: 1px solid #ddd;
-    background-color: #f9f9f9;
+    background-color: #fff;
     border-radius: 10px;
     cursor: pointer;
     color: #0073e6;
@@ -548,7 +558,7 @@ body {
     margin-top: 15px;
     display: none;
     padding: 10px;
-    background-color: #f9f9f9;
+    background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 5px;
 }
@@ -617,19 +627,7 @@ body {
     margin-right: 8px;
 }
 
-/*.ws-message {
-    position: absolute;
-    top: 25%; 
-    left:20%;
-    background-color: #28a745;
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 14px;
-    z-index: 1000;
-}*/
-
- /* 错误消息 */
+/* 错误消息 */
 .ws-message-error {
     background-color: #dc3545;
 }
@@ -638,7 +636,7 @@ body {
 
 /* 随机笑话板块样式 */
 .ws-random-joke {
-    background-color: #f9f9f9;
+    background-color: #fff;
     border-left: 5px solid #3498db;
     padding: 15px;
     margin-top: 20px;
@@ -669,7 +667,7 @@ body {
 
 /* 历史上的今天样式 */
 .ws-history-today {
-    background-color: #f9f9f9;
+    background-color: #fff;
     border-left: 5px solid #3498db;
     padding: 20px;
     margin-bottom: 20px;
@@ -721,7 +719,7 @@ body {
 
 /* 热门视频的样式 */
 .ws-hot-videos {
-    background-color: #f9f9f9;
+    background-color: #fff;
     border-left: 5px solid #3498db;
     padding: 20px;
     border-radius: 8px;
@@ -779,7 +777,7 @@ body {
     border-radius: 8px;
     border: 1px solid #ddd;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    background-color: #f9f9f9;
+    background-color: #fff;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -917,12 +915,19 @@ body {
 .player-mid {
     border-radius: 8px;
 }
+ 
+/* 网易云音乐 */
+.ws-music-iframe {
+    display: block;
+    width: 100%;
+    clear: both;
+}
 
 /* 随机文章板块 */
 .ws-random-articles {
     margin: 20px 0;
     padding: 15px;
-    background-color: #f9f9f9;
+    background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -968,6 +973,286 @@ body {
     color: #005177;
     text-decoration: underline;
 }
+/* 随机文章板块 end*/
+
+
+/* 天气样式 */
+.ws-weather {
+    width: 100%;
+    margin: 5px auto;
+    box-sizing: border-box;
+    border-radius: 12px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+}
+
+#tp-weather-widget * {
+    font-size: 1.2rem;
+}
+
+.sw-container .sw-card-slim-background,
+.sw-container .sw-card-bubble-container {
+  background-image: linear-gradient(to bottom, #d0f0fd, #b3e4f2);
+  border-radius: 8px;
+  padding: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+#tp-weather-widget .sw-typography {
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
+#tp-weather-widget .sw-card-bubble-background {
+  background: #ecf0f2;
+}
+
+#tp-weather-widget .sw-ui-main-container {
+  padding: 10px;
+}
+
+#tp-weather-widget .sw-ui-main {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px 0 rgba(15, 37, 64, 0.1);
+}
+
+#tp-weather-widget .sw-ui-main-arc {
+  background: linear-gradient(
+    to left,
+    violet,
+    indigo,
+    blue,
+    green,
+    yellow,
+    orange,
+    red
+  );
+  border: none;
+}
+
+#tp-weather-widget .sw-ui-main-arc::after {
+  position: absolute;
+  display: block;
+  top: 7px;
+  left: 7px;
+  width: 95%;
+  height: 95%;
+  content: '';
+  background-color: #fff;
+  background-repeat: no-repeat;
+  background-size: cover;
+  border-radius: 50%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+#tp-weather-widget .sw-ui-main-weatherIcon {
+  z-index: 2;
+}
+
+#tp-weather-widget .sw-ui-tile {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+#tp-weather-widget .sw-ui-tile::before,
+.sw-ui-tile::after {
+  content: none !important;
+}
+
+#tp-weather-widget .sw-ui-tile-container {
+  border-radius: 16px;
+  background: #fff;
+  width: 90%;
+  box-shadow: 0 4px 6px 0 rgba(15, 37, 64, 0.1);
+}
+
+#tp-weather-widget .sw-ui-carousel {
+  margin-bottom: 5px;
+  padding: 5px 0;
+}
+
+#tp-weather-widget .sw-ui-carousel-item .sw-ui-tile-container {
+  border-radius: unset;
+  background: unset;
+  width: 100%;
+  box-shadow: unset;
+}
+
+#tp-weather-widget .sw-ui-carousel-item {
+  border-radius: 16px;
+  background: #edf1f3;
+  box-shadow: 0 4px 6px 0 rgba(15, 37, 64, 0.1);
+}
+
+#tp-weather-widget .sw-ui-chart {
+  margin-bottom: 16px;
+}
+
+#tp-weather-widget .sw-ui-tile {
+    margin-bottom: 5px !important;
+}
+
+.iKeAmR {
+    height: 70px !important;
+}
+
+.color-20 {
+    color: #5cb85c !important;
+}
+
+.eBcdRn {
+    padding: 5px 5px !important;
+}
+
+.bcxaVF {
+    margin: 0px !important;
+}
+
+.jQorrF {
+    display: block !important;
+    margin-top: -11px !important;
+}
+
+.jSHjAa {
+    display: block !important;
+    color: rgba(0, 0, 0, 0.87) !important;
+    background-color: rgba(0, 0, 0, 0) !important;
+    text-decoration: none !important;
+    font-size: 12px !important;
+}
+
+.emBiRU {
+    /* display: none !important;*/
+    margin-bottom: 1px !important;
+    margin-top: 1px !important;
+}
+/* 天气样式 end*/
+
+/* 联系板块 */
+.ws-site-owner {
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+/* 取消超链接的下划线 */
+.ws-site-owner a {
+    text-decoration: none !important;
+}
+
+/* 鼠标悬停时改变颜色 */
+.ws-site-owner a:hover {
+    color: #0073aa;
+}
+
+/* 上面几个垂直排列 */
+.ws-site-owner {
+    display: block;
+}
+
+/* 每个信息块容器 */
+.ws-site-owner > div {
+    display: flex;
+    align-items: center;
+}
+
+/* 图标样式 */
+.ws-site-owner i {
+    font-size: 20px;
+    margin-right: 6px;
+}
+
+/* 用于微博、抖音、网易云、微信图标 */
+.ws-social-icons {
+    display: flex;
+    gap: 8px; /* 图标之间的间距 */
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* 社交图标容器 */
+.ws-social-icons > div {
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+/* 鼠标悬停时，容器向上浮动 */
+.ws-social-icons .ws-site-weibo:hover,
+.ws-social-icons .ws-site-douyin:hover,
+.ws-social-icons .ws-site-weixin:hover,
+.ws-social-icons .ws-site-xiaohongshu:hover,
+.ws-social-icons .ws-site-wangyiyun:hover {
+    transform: translateY(-3px);
+    color: #ff4500;
+}
+
+/* 社交图标容器中的每个图标 */
+.ws-social-icons i {
+    font-size: 25px;
+    margin: 0;
+    transition: transform 0.3s ease;
+}
+
+/* 微信二维码显示 */
+.ws-weixin-qrcode {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    display: none;  /* 默认隐藏二维码 */
+    z-index: 10;
+}
+
+/* 微信二维码显示 */
+.ws-site-weixin:hover .ws-weixin-qrcode {
+    display: block;
+}
+/* 联系板块 end*/
+
+
+/* 必应壁纸板块样式 */
+.ws-bing-wallpaper {
+    margin-top: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 6px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ws-bing-wallpaper img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* 鼠标悬停时的效果 */
+.ws-bing-wallpaper:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2), 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.ws-bing-wallpaper img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+/* 必应壁纸板块样式 end*/
+
 
 /* 屏幕小于1024px时隐藏右侧和左侧边栏 */
 @media (max-width: 1024px) {
@@ -983,11 +1268,15 @@ body {
     }
 
     .ws-feeling-sidebar {
-        display: none; /* 隐藏右侧边栏 */
+         /* display: none;隐藏右侧边栏 */
+        width: calc(100% - 10px);
+        margin: 0 auto 20px;
     }
 
     .ws-feeling-left-sidebar {
-        display: none; /* 隐藏左侧边栏 */
+         /* display: none; 隐藏左侧边栏 */
+        width: calc(100% - 10px);
+        margin: 0 auto 20px;
     }
 }
 
