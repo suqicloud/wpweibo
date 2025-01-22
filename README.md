@@ -3,7 +3,7 @@
 
 插件名称：小半微心情
 
-<mark style="background-color: red; color: white;">插件是基于Modown主题开发调试的，对于原版Modown主题的兼容性还行，但是其他主题就不知道了。</mark>
+<mark style="background-color: red; color: white;">插件是基于Modown主题开发调试的，不太兼容其他主题，其他主题使用需要自己优化。</mark>
 
 插件页面如果要设置为网站首页，就要关闭其他其他用户组发微博的权限。  
 
