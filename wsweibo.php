@@ -3,7 +3,7 @@
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论，白名单等常规设置。
- * Version: 2.7
+ * Version: 2.8
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -716,17 +716,52 @@ function ws_weibo_process_content_links($content) {
     return $content;
 }
 
+// 微博内容音频链接处理，支持mp3格式的播放
+function ws_weibo_process_content_audio($content) {
+    // 正则表达式匹配MP3链接
+    $pattern = '/https?:\/\/[^\s]+?\.mp3/i';
+    preg_match_all($pattern, $content, $matches);
+
+    if (!empty($matches[0])) {
+        $audios = $matches[0]; // 获取所有MP3链接
+        $audio_player_html = '';
+
+        foreach ($audios as $audio) {
+            // 生成HTML5音频播放器代码
+            $audio_player_html .= '
+                <audio controls>
+                    <source src="' . esc_url($audio) . '" type="audio/mpeg">
+                    您的浏览器不支持.
+                </audio>';
+        }
+
+        // 替换MP3链接为HTML播放器代码
+        $content = preg_replace($pattern, '', $content); // 去除原始音频链接
+        $content .= $audio_player_html; // 添加播放器代码
+    }
+
+    return $content;
+}
+
 // 对内容转义处理，排除图片和视频需要的标签
 function ws_weibo_process_content_with_code_escape($content) {
     // 允许的HTML标签
     $allowed_tags = array(
-        'video' => array(
+        'audio' => array(
             'controls' => true,
-            'class' => true
+            'autoplay' => true,
+            'loop' => true,
+            'muted' => true,
+            'preload' => true,
+            'class' => true,
         ),
         'source' => array(
             'src' => true,
-            'type' => true
+            'type' => true,
+        ),
+        'video' => array(
+            'controls' => true,
+            'class' => true,
         ),
         'iframe' => array(
             'src' => true,
@@ -735,10 +770,10 @@ function ws_weibo_process_content_with_code_escape($content) {
             'frameborder' => true,
             'allowfullscreen' => true,
             'scrolling' => true,
-            'class' => true
+            'class' => true,
         ),
         'div' => array(
-            'class' => true
+            'class' => true,
         ),
         'p' => array(),
         'img' => array(
@@ -748,14 +783,14 @@ function ws_weibo_process_content_with_code_escape($content) {
             'width' => true,
             'display' => true,
             'margin' => true,
-            'height' => true
+            'height' => true,
         ),
         'a' => array(
             'href' => true,
             'target' => true,
             'title' => true,
-            'class' => true
-        )
+            'class' => true,
+        ),
     );
 
     // wp_kses函数过滤内容
@@ -766,6 +801,7 @@ function ws_weibo_process_content_with_code_escape($content) {
 
     return $content;
 }
+
 
 // 修改微博内容处理函数，增加图片链接解析
 function ws_weibo_process_content_with_media($content) {
@@ -783,6 +819,9 @@ function ws_weibo_process_content_with_media($content) {
 
     // 网易云音乐解析
     $content = ws_weibo_parse_netease_music($content);
+
+    // 处理音频链接
+    $content = ws_weibo_process_content_audio($content);
 
     // 屏蔽关键词
     $content = ws_weibo_process_content_with_code_escape($content);
