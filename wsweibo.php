@@ -3,7 +3,7 @@
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论，白名单等常规设置。
- * Version: 2.8
+ * Version: 2.9
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -488,12 +488,15 @@ function ws_weibo_weibo_settings_page() {
 
 // 前台背景颜色
 function ws_weibo_apply_background_color() {
-    $background_color = get_option('ws_weibo_background_color', '#fff');
-    echo "<style>
-        .ws-container, .ws-feeling-sidebar, .ws-feeling-left-sidebar {
-            background-color: {$background_color};
-        }
-    </style>";
+    // 确保当前页面包含短代码[ws_weibo_feeling]
+    if (has_shortcode(get_post()->post_content, 'ws_weibo_feeling')) {
+        $background_color = get_option('ws_weibo_background_color', '#fff');
+        echo "<style>
+            .ws-container, .ws-feeling-sidebar, .ws-feeling-left-sidebar {
+                background-color: {$background_color};
+            }
+        </style>";
+    }
 }
 add_action('wp_head', 'ws_weibo_apply_background_color');
 
@@ -1161,27 +1164,30 @@ add_action('widgets_init', 'ws_weibo_register_announcement_ad_widget');
 
 // 注册微博右侧边栏微信二维码
 function ws_weibo_weixin_qrcode_script() {
-    ?>
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const weixinIcon = document.querySelector('.ws-weixin-icon');
-        const qrcode = document.querySelector('.ws-weixin-qrcode');
+    // 检查当前页面是否包含[ws_weibo_feeling]短代码，且已设置微信二维码URL
+    if (has_shortcode(get_post()->post_content, 'ws_weibo_feeling') && get_option('ws_weibo_weixin_qrcode_url')) {
+        ?>
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const weixinIcon = document.querySelector('.ws-weixin-icon');
+            const qrcode = document.querySelector('.ws-weixin-qrcode');
 
-        if (weixinIcon && qrcode) {
-            weixinIcon.addEventListener('mouseenter', function() {
-                qrcode.style.display = 'block';  // 显示二维码
-            });
+            if (weixinIcon && qrcode) {
+                weixinIcon.addEventListener('mouseenter', function() {
+                    qrcode.style.display = 'block';  // 显示二维码
+                });
 
-            weixinIcon.addEventListener('mouseleave', function() {
-                qrcode.style.display = 'none';  // 隐藏二维码
-            });
-        }
-    });
-    </script>
-    <?php
+                weixinIcon.addEventListener('mouseleave', function() {
+                    qrcode.style.display = 'none';  // 隐藏二维码
+                });
+            }
+        });
+        </script>
+        <?php
+    }
 }
-
 add_action('wp_footer', 'ws_weibo_weixin_qrcode_script');
+
 
 // 注册左边侧边栏微博小工具
 function ws_weibo_register_feeling_left_sidebar() {
