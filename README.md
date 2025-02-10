@@ -49,12 +49,6 @@
 
 
 
-
-
-社区反馈：https://iticu.icu/forum  
-
-
-
 插件启用会自动创建前台微博页面，如果没有自动创建可以手动，短代码：
 `[ws_weibo_feeling]`
 
