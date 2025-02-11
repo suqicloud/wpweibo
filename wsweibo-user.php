@@ -102,7 +102,6 @@ function ws_weibo_keyword_block_manage_page() {
     <?php
 }
 
-
 // 处理微博内容中的屏蔽关键词
 function ws_weibo_process_blocked_keywords($content) {
     $blocked_keywords = get_option('ws_weibo_blocked_keywords', '');
@@ -118,34 +117,50 @@ function ws_weibo_process_blocked_keywords($content) {
     return $content;
 }
 
-//网址白名单管理页面
+// 网址白名单管理页面
 function ws_weibo_process_whitelist_update() {
+    $current_site_host = parse_url(get_site_url(), PHP_URL_HOST);
+
     if (isset($_POST['submit_whitelist'])) {
-        // 获取并保存白名单
         $whitelist = sanitize_text_field($_POST['whitelist']);
-        $whitelist_domains = array_map('trim', explode(',', $whitelist)); // 用逗号分隔并去除两端空格
+        $whitelist_domains = array_filter(array_map('trim', explode(',', $whitelist)));
+
+        if (!in_array($current_site_host, $whitelist_domains)) {
+            $whitelist_domains[] = $current_site_host;
+        }
         update_option('ws_weibo_image_whitelist', $whitelist_domains);
         echo "<div class='updated'><p>白名单已更新。</p></div>";
     }
 
-    // 删除白名单域名
     if (isset($_POST['delete_domain']) && !empty($_POST['domain'])) {
         $domain_to_delete = sanitize_text_field($_POST['domain']);
-        $whitelist_domains = get_option('ws_weibo_image_whitelist', []);
-        $whitelist_domains = array_filter($whitelist_domains, function($domain) use ($domain_to_delete) {
-            return $domain !== $domain_to_delete;  // 过滤掉要删除的域名
-        });
-        update_option('ws_weibo_image_whitelist', array_values($whitelist_domains));
-        echo "<div class='updated'><p>域名已删除。</p></div>";
+
+        if ($domain_to_delete === $current_site_host) {
+            echo "<div class='error'><p>当前网站域名不能删除。</p></div>";
+        } else {
+            $whitelist_domains = get_option('ws_weibo_image_whitelist', []);
+            $whitelist_domains = array_filter($whitelist_domains, function($domain) use ($domain_to_delete) {
+                return $domain !== $domain_to_delete;
+            });
+            if (!in_array($current_site_host, $whitelist_domains)) {
+                $whitelist_domains[] = $current_site_host;
+            }
+            update_option('ws_weibo_image_whitelist', array_values($whitelist_domains));
+            echo "<div class='updated'><p>域名已删除。</p></div>";
+        }
     }
 }
 
-// 白名单管理
+// 白名单管理页面展示
 function ws_weibo_whitelist_manage_page() {
-    ws_weibo_process_whitelist_update();  // 处理保存和删除操作
+    ws_weibo_process_whitelist_update();
 
-    // 获取当前白名单
     $whitelist = get_option('ws_weibo_image_whitelist', []);
+    $current_site_host = parse_url(get_site_url(), PHP_URL_HOST);
+
+    $whitelist = array_filter($whitelist, function($domain) use ($current_site_host) {
+        return $domain !== $current_site_host;
+    });
 
     ?>
     <div class="wrap">
@@ -155,8 +170,10 @@ function ws_weibo_whitelist_manage_page() {
             <textarea name="whitelist" id="whitelist" rows="6" class="large-text" style="resize: both;"><?php echo esc_textarea(implode(', ', $whitelist)); ?></textarea>
             <br>
             <input type="submit" name="submit_whitelist" value="保存白名单" class="button-primary">
-        </form><br>
-        <p>白名单里面的域名，可以直接显示为图片(jpg/png/gif)和视频(mp4/webm)。<br>一般添加可信的图床、对象存储等域名，格式:img.aa.com</p>
+        </form>
+        <br>
+        <p>白名单里面的域名，可以直接显示为图片(jpg/png/gif)和视频(mp4/webm)。<br>
+        当前站点域名 <strong><?php echo esc_html($current_site_host); ?></strong> 已默认加入白名单。</p>
 
         <h3>当前白名单域名：</h3>
         <?php if (!empty($whitelist)): ?>
@@ -184,7 +201,6 @@ function ws_weibo_whitelist_manage_page() {
         <?php else: ?>
             <p>目前没有白名单域名。</p>
         <?php endif; ?>
-
     </div>
     <?php
 }

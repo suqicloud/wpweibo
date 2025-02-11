@@ -3,7 +3,7 @@
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论，白名单等常规设置。
- * Version: 2.9.1
+ * Version: 3.0
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -171,6 +171,7 @@ function ws_weibo_weibo_settings_page() {
 
         // 无权发布微博的复选框
         $allowed_roles = isset($_POST['ws_weibo_allowed_roles'])? $_POST['ws_weibo_allowed_roles'] : [];
+
         // 无权发布微博的自定义提示内容
         $unauthorized_message = wp_kses_post($_POST['ws_weibo_unauthorized_message']);
 
@@ -231,6 +232,7 @@ function ws_weibo_weibo_settings_page() {
 
         //更新无权发布微博的选择
         update_option('ws_weibo_allowed_roles', $allowed_roles);
+
         //更新无权发布微博的自定义提示内容
         update_option('ws_weibo_unauthorized_message', $unauthorized_message);
 
@@ -607,118 +609,76 @@ function ws_weibo_is_within_post_time() {
 }
 
 
+// 获取白名单的域名
+function get_whitelist_domains() {
+    $whitelist_domains = get_option('ws_weibo_image_whitelist', []);
+    $current_site_host = parse_url(get_site_url(), PHP_URL_HOST);
+    if (!in_array($current_site_host, $whitelist_domains)) {
+        $whitelist_domains[] = $current_site_host;
+    }
+    return $whitelist_domains;
+}
+
 // 微博内容图片链接处理
 function ws_weibo_process_content_images($content) {
-    // 获取白名单的域名
-    $whitelist_domains = get_option('ws_weibo_image_whitelist', []);
+    $whitelist_domains = get_whitelist_domains();
 
-    // 正则表达式匹配图片链接
     $pattern = '/https?:\/\/[^\s]+?\.(jpg|jpeg|png|gif|bmp|webp)/i';
     preg_match_all($pattern, $content, $matches);
 
     if (!empty($matches[0])) {
         $images = $matches[0];
         $image_html = '<div class="ws-images">';
-        
-        // 如果只有一张图片，添加single-image类，主要为了判断超过1000px的图片
-        if (count($images) == 1) {
-            $image_html .= '<div class="ws-image-wrapper single-image"><img src="' . esc_url($images[0]) . '" alt="微心情动态说说" class="ws-image"></div>';
-        } else {
-            // 多张图片时不加single-image类
-            foreach ($images as $image) {
-                // 解析图片链接的域名
-                $parsed_url = parse_url($image);
-                $domain = isset($parsed_url['host']) ? $parsed_url['host'] : '';
 
-                // 检查图片链接是否在白名单内
-                if (in_array($domain, $whitelist_domains)) {
-                    $image_html .= '<div class="ws-image-wrapper"><img src="' . esc_url($image) . '" alt="微心情动态说说" class="ws-image"></div>';
-                } else {
-                    $image_html .= '<p>' . esc_html($image) . '</p>';
-                }
+        foreach ($images as $image) {
+            $parsed_url = parse_url($image);
+            $domain = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+
+            // 仅处理白名单中的图片链接
+            if (in_array($domain, $whitelist_domains)) {
+                $image_html .= '<div class="ws-image-wrapper"><img src="' . esc_url($image) . '" alt="微心情动态说说" class="ws-image"></div>';
+            } else {
+                // 非白名单图片链接，直接不显示
+                $image_html .= '';
             }
         }
 
         $image_html .= '</div>';
-        
-        // 替换图片链接
-        $content = preg_replace($pattern, '', $content); // 先去除原始图片链接
-        $content .= $image_html; // 在最后添加图片显示的html
+        $content = preg_replace($pattern, '', $content);
+        $content .= $image_html;
     }
 
     return $content;
 }
 
-// 微博内容视频链接处理，支持mp4和webm格式
+// 微博内容视频链接处理
 function ws_weibo_process_content_videos($content) {
-    // 获取白名单的域名
-    $whitelist_domains = get_option('ws_weibo_image_whitelist', []);
+    $whitelist_domains = get_whitelist_domains();
 
-    // 正则表达式匹配视频链接
     $pattern = '/https?:\/\/[^\s]+?\.(mp4|webm)/i';
     preg_match_all($pattern, $content, $matches);
 
     if (!empty($matches[0])) {
-        $videos = $matches[0]; // 获取所有视频链接
+        $videos = $matches[0];
         $video_html = '<div class="ws-videos">';
 
-        // 处理视频分组的函数
-        $process_videos_group = function($video_group) use ($whitelist_domains) {
-            $group_html = '';
-            foreach ($video_group as $video) {
-                // 解析视频链接的域名
-                $parsed_url = parse_url($video);
-                $domain = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+        foreach ($videos as $video) {
+            $parsed_url = parse_url($video);
+            $domain = isset($parsed_url['host']) ? $parsed_url['host'] : '';
 
-                // 检查视频链接是否在白名单内
-                if (in_array($domain, $whitelist_domains)) {
-                    $video_type = (stripos($video, '.mp4') !== false) ? 'mp4' : 'webm';
-                    $group_html .= '<video controls class="ws-video">
-                                        <source src="' . esc_url($video) . '" type="video/' . $video_type . '">
-                                      </video>';
-                } else {
-                    // 不在白名单内，显示视频链接
-                    $group_html .= '<p>' . esc_html($video) . '</p>';
-                }
+            // 仅处理白名单中的视频链接
+            if (in_array($domain, $whitelist_domains)) {
+                $video_type = (stripos($video, '.mp4') !== false) ? 'mp4' : 'webm';
+                $video_html .= '<video controls class="ws-video"><source src="' . esc_url($video) . '" type="video/' . $video_type . '"></video>';
+            } else {
+                // 非白名单视频链接，直接不显示
+                $video_html .= '';
             }
-            return $group_html;
-        };
-
-        // 根据视频数量决定如何分组
-        $chunked_videos = array_chunk($videos, 1, true); // 按照每1个视频分组
-        foreach ($chunked_videos as $index => $video_group) {
-            $video_html .= $process_videos_group($video_group);  // 处理当前分组的视频
         }
 
         $video_html .= '</div>';
-
-        // 替换视频链接
-        $content = preg_replace($pattern, '', $content); // 先去除原始视频链接
-        $content .= $video_html; // 在最后添加视频显示的html
-    }
-
-    return $content;
-}
-
-// 微博内容中的网址，判断是否为当前网站的链接
-function ws_weibo_process_content_links($content) {
-    // 正则表达式匹配网址
-    $pattern = '/(http[s]?:\/\/[^\s]+)/i';
-    preg_match_all($pattern, $content, $matches);
-
-    if (!empty($matches[0])) {
-        $current_site_url = get_site_url();  // 获取当前网站URL
-
-        foreach ($matches[0] as $url) {
-            // 判断是否为当前网站的URL
-            if (strpos($url, $current_site_url) === 0) {
-                // 当前网站的链接，自动加上超链接
-                $content = str_replace($url, '<a href="' . esc_url($url) . '" target="_blank">' . esc_html($url) . '</a>', $content);
-            } else {
-                // 外部网站，不添加超链接
-                $content = str_replace($url, esc_html($url), $content);
-            }
-        }
+        $content = preg_replace($pattern, '', $content);
+        $content .= $video_html;
     }
 
     return $content;
@@ -726,6 +686,17 @@ function ws_weibo_process_content_links($content) {
 
 // 微博内容音频链接处理，支持mp3格式的播放
 function ws_weibo_process_content_audio($content) {
+    // 获取白名单的域名
+    $whitelist_domains = get_option('ws_weibo_image_whitelist', []);
+    
+    // 获取当前站点的域名
+    $current_site_host = parse_url(get_site_url(), PHP_URL_HOST);
+    
+    // 确保当前站点域名也在白名单中
+    if (!in_array($current_site_host, $whitelist_domains)) {
+        $whitelist_domains[] = $current_site_host;
+    }
+
     // 正则表达式匹配MP3链接
     $pattern = '/https?:\/\/[^\s]+?\.mp3/i';
     preg_match_all($pattern, $content, $matches);
@@ -735,18 +706,107 @@ function ws_weibo_process_content_audio($content) {
         $audio_player_html = '';
 
         foreach ($audios as $audio) {
-            // 生成HTML5音频播放器代码
-            $audio_player_html .= '
-                <audio controls>
-                    <source src="' . esc_url($audio) . '" type="audio/mpeg">
-                    您的浏览器不支持.
-                </audio>';
+            // 解析音频链接的域名
+            $parsed_url = parse_url($audio);
+            $domain = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+
+            // 检查音频链接是否在白名单内
+            if (in_array($domain, $whitelist_domains)) {
+                // 生成HTML5音频播放器代码
+                $audio_player_html .= '
+                    <audio controls>
+                        <source src="' . esc_url($audio) . '" type="audio/mpeg">
+                        您的浏览器不支持.
+                    </audio>';
+            } else {
+                // 不在白名单内，显示音频链接
+                $audio_player_html .= '<p>' . esc_html($audio) . '</p>';
+            }
         }
 
         // 替换MP3链接为HTML播放器代码
         $content = preg_replace($pattern, '', $content); // 去除原始音频链接
         $content .= $audio_player_html; // 添加播放器代码
     }
+
+    return $content;
+}
+
+// 微博内容中的网址，判断是否为当前网站的链接
+function ws_weibo_process_content_links($content) {
+    $processed_content = $content;
+    $processed_content = ws_weibo_process_content_images($processed_content);
+    $processed_content = ws_weibo_process_content_videos($processed_content);
+    $processed_content = ws_weibo_process_content_audio($processed_content);
+
+    $pattern = '/(http[s]?:\/\/[^\s]+)/i';
+    preg_match_all($pattern, $processed_content, $matches);
+
+    if (!empty($matches[0])) {
+        $current_site_url = get_site_url();
+        $content = str_replace('<br />', '__BR__', $content); // 临时替换所有 <br />
+
+        foreach ($matches[0] as $url) {
+            if (strpos($url, $current_site_url) === 0) {
+                $content = str_replace($url, '<a href="' . esc_url($url) . '" target="_blank">' . esc_html($url) . '</a>', $content);
+            } else {
+                $content = str_replace($url, esc_html($url), $content); // 外部链接以纯文本显示
+            }
+        }
+
+        $content = str_replace('__BR__', '<br />', $content); // 恢复 <br />
+    }
+
+    return $content;
+}
+
+// Bilibili视频解析
+function ws_weibo_process_content_bilibili_videos($content) {
+    // 匹配Bilibili视频链接
+    //$pattern = '/https?:\/\/(?:www\.)?bilibili\.com\/video\/([a-zA-Z0-9]+)/i';
+    $pattern = '/https?:\/\/(?:www\.)?bilibili\.com\/video\/([a-zA-Z0-9]+)(?:[\/?].*)?/i';
+    preg_match_all($pattern, $content, $matches);
+
+
+    if (!empty($matches[0])) {
+        $videos = $matches[0]; // 获取Bilibili视频链接
+        $video_html = '<div class="ws-bilibili-videos">';
+
+        foreach ($matches[1] as $video_id) {
+            // 嵌入iframe，展示Bilibili视频
+            $iframe_url = "https://player.bilibili.com/player.html?bvid={$video_id}&page=1&autoplay=0";
+            $video_html .= '<div class="ws-bilibili-video">';
+            $video_html .= '<iframe src="' . esc_url($iframe_url) . '" 
+                                 frameborder="0" 
+                                 allowfullscreen="true" 
+                                 scrolling="no"
+                                 width="100%" 
+                                 height="400px"
+                                 class="ws-bilibili-iframe"></iframe>';
+            $video_html .= '</div>';
+        }
+
+        $video_html .= '</div>';
+
+        // 替换Bilibili视频链接为嵌入的HTML
+        $content = preg_replace($pattern, '', $content); // 移除原始链接
+        $content .= $video_html; // 添加视频展示的HTML
+    }
+
+    return $content;
+}
+
+// 检测网易云音乐链接并生成播放器
+function ws_weibo_parse_netease_music($content) {
+    $content = preg_replace_callback(
+        '/https?:\/\/music\.163\.com\/(?:#\/)?song\?id=(\d+)(?:&.*)?/',
+        function ($matches) {
+            $song_id = $matches[1]; // 提取歌曲ID
+            $iframe = '<iframe class="ws-music-iframe" frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="//music.163.com/outchain/player?type=2&id=' . $song_id . '&auto=0&height=66"></iframe>';
+            return $iframe; // 用iframe替换链接
+        },
+        $content
+    );
 
     return $content;
 }
@@ -813,7 +873,7 @@ function ws_weibo_process_content_with_code_escape($content) {
 
 // 修改微博内容处理函数，增加图片链接解析
 function ws_weibo_process_content_with_media($content) {
-    // 微博中的全部链接（包括图片链接和视频链接）
+    // 微博中判断是否为当前网站
     $content = ws_weibo_process_content_links($content);
 
     // 微博中的图片链接
@@ -831,8 +891,10 @@ function ws_weibo_process_content_with_media($content) {
     // 处理音频链接
     $content = ws_weibo_process_content_audio($content);
 
-    // 屏蔽关键词
+    // 处理标签
     $content = ws_weibo_process_content_with_code_escape($content);
+
+    // 屏蔽关键词
     return ws_weibo_process_blocked_keywords($content);
 }
 
@@ -943,57 +1005,6 @@ function ws_weibo_delete_all_feelings() {
 }
 add_action('wp_ajax_ws_weibo_delete_all_feelings', 'ws_weibo_delete_all_feelings');
 add_action('wp_ajax_nopriv_ws_weibo_delete_all_feelings', 'ws_weibo_delete_all_feelings');
-
-// Bilibili视频解析
-function ws_weibo_process_content_bilibili_videos($content) {
-    // 匹配Bilibili视频链接
-    //$pattern = '/https?:\/\/(?:www\.)?bilibili\.com\/video\/([a-zA-Z0-9]+)/i';
-    $pattern = '/https?:\/\/(?:www\.)?bilibili\.com\/video\/([a-zA-Z0-9]+)(?:[\/?].*)?/i';
-    preg_match_all($pattern, $content, $matches);
-
-
-    if (!empty($matches[0])) {
-        $videos = $matches[0]; // 获取Bilibili视频链接
-        $video_html = '<div class="ws-bilibili-videos">';
-
-        foreach ($matches[1] as $video_id) {
-            // 嵌入iframe，展示Bilibili视频
-            $iframe_url = "https://player.bilibili.com/player.html?bvid={$video_id}&page=1&autoplay=0";
-            $video_html .= '<div class="ws-bilibili-video">';
-            $video_html .= '<iframe src="' . esc_url($iframe_url) . '" 
-                                 frameborder="0" 
-                                 allowfullscreen="true" 
-                                 scrolling="no"
-                                 width="100%" 
-                                 height="400px"
-                                 class="ws-bilibili-iframe"></iframe>';
-            $video_html .= '</div>';
-        }
-
-        $video_html .= '</div>';
-
-        // 替换Bilibili视频链接为嵌入的HTML
-        $content = preg_replace($pattern, '', $content); // 移除原始链接
-        $content .= $video_html; // 添加视频展示的HTML
-    }
-
-    return $content;
-}
-
-// 检测网易云音乐链接并生成播放器
-function ws_weibo_parse_netease_music($content) {
-    $content = preg_replace_callback(
-        '/https?:\/\/music\.163\.com\/(?:#\/)?song\?id=(\d+)(?:&.*)?/',
-        function ($matches) {
-            $song_id = $matches[1]; // 提取歌曲ID
-            $iframe = '<iframe class="ws-music-iframe" frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="//music.163.com/outchain/player?type=2&id=' . $song_id . '&auto=0&height=66"></iframe>';
-            return $iframe; // 用iframe替换链接
-        },
-        $content
-    );
-
-    return $content;
-}
 
 //获取当前用户微博数量
 function ws_weibo_get_user_weibo_count() {
@@ -1350,7 +1361,9 @@ function ws_weibo_frontend_page() {
     ob_start();
 
     //获取标题
-    $ws_weibo_frontend_title = get_option(ws_weibo_WEIBO_POST_TIME_OPTION)['ws_weibo_frontend_title'];
+    $weibo_settings = get_option(ws_weibo_WEIBO_POST_TIME_OPTION, []); // 确保返回数组
+    $ws_weibo_frontend_title = isset($weibo_settings['ws_weibo_frontend_title']) ? $weibo_settings['ws_weibo_frontend_title'] : '微心情 - 分享你的心情';
+
 
     // 确保ajaxurl可用
     echo '<script type="text/javascript">
@@ -1376,9 +1389,11 @@ function ws_weibo_frontend_page() {
         <h2><?php echo esc_html($ws_weibo_frontend_title); ?></h2>
         <?php
         //获取隐藏统计设置
-        $settings = get_option(ws_weibo_HIDE_USER_STATISTICS_OPTION);
+        $settings = get_option(ws_weibo_HIDE_USER_STATISTICS_OPTION, []); // 确保返回数组
+        $hide_user_statistics = isset($settings['hide_user_statistics']) ? $settings['hide_user_statistics'] : false;
+
         // 统计板块
-        if (is_user_logged_in() && !$settings['hide_user_statistics']) {
+        if (is_user_logged_in() && !$hide_user_statistics) {
             $user_name = wp_get_current_user()->display_name;
             $user_avatar = get_avatar(get_current_user_id(), 40);  // 获取当前用户头像
             $weibo_count = ws_weibo_get_user_weibo_count();  // 获取当前用户微博数量
