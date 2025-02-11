@@ -3,6 +3,12 @@
 
 插件名称：小半微心情
 
+[![License](https://img.shields.io/badge/license-GPL-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-3.0-green.svg)](https://github.com/suqicloud/wpweibo/releases/tag/3.0)
+[![WordPress](https://img.shields.io/badge/WordPress-6.7-blue.svg)](https://wordpress.org/)
+[![PHP](https://img.shields.io/badge/PHP-8.0-orange.svg)](https://www.php.net/)
+
+
 <mark style="background-color: red; color: white;">插件是基于Modown主题开发调试的，不太兼容其他主题，其他主题使用需要自己优化。</mark>
 
 插件页面如果要设置为网站首页，就要关闭其他其他用户组发微博的权限。  
