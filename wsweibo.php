@@ -82,11 +82,15 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'ws_weibo_add_set
 
 // 插件激活时创建前台页面
 function ws_weibo_create_feeling_page_on_activation() {
-    // 检查是否已有页面存在
-    $page = get_page_by_path('ws-feeling');
-    
-    // 如果页面不存在，则创建新页面
-    if (!$page) {
+    // 查询是否已有包含短代码 [ws_weibo_feeling] 的页面
+    $query = new WP_Query(array(
+        'post_type'  => 'page', // 查询页面
+        's'          => '[ws_weibo_feeling]', // 搜索包含短代码的页面
+        'post_status' => 'publish', // 只查询已发布的页面
+    ));
+
+    // 如果没有找到包含短代码的页面，则创建新页面
+    if (!$query->have_posts()) {
         // 创建页面数据
         $page_data = array(
             'post_title'   => '微心情动态', // 页面标题
@@ -98,6 +102,9 @@ function ws_weibo_create_feeling_page_on_activation() {
         // 插入页面
         wp_insert_post($page_data);
     }
+
+    // 重置查询
+    wp_reset_postdata();
 }
 register_activation_hook(__FILE__, 'ws_weibo_create_feeling_page_on_activation');
 
