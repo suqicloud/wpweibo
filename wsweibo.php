@@ -3,7 +3,7 @@
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论，白名单等常规设置。
- * Version: 3.0
+ * Version: 3.0.1
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
