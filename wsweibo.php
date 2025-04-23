@@ -3,7 +3,7 @@
  * Plugin Name: 小半微心情
  * Plugin URI: https://www.jingxialai.com/4307.html
  * Description: 心情动态说说前台用户版，支持所有用户发布心情，点赞，评论，白名单等常规设置。
- * Version: 3.0.1
+ * Version: 3.0.2
  * Author: Summer
  * License: GPL License
  * Author URI: https://www.jingxialai.com/
@@ -1362,7 +1362,6 @@ function ws_weibo_register_left_ad_widget() {
 }
 add_action('widgets_init', 'ws_weibo_register_left_ad_widget');
 
-
 // 前台微博页面
 function ws_weibo_frontend_page() {
     ob_start();
@@ -1371,26 +1370,18 @@ function ws_weibo_frontend_page() {
     $weibo_settings = get_option(ws_weibo_WEIBO_POST_TIME_OPTION, []); // 确保返回数组
     $ws_weibo_frontend_title = isset($weibo_settings['ws_weibo_frontend_title']) ? $weibo_settings['ws_weibo_frontend_title'] : '微心情 - 分享你的心情';
 
-
     // 确保ajaxurl可用
     echo '<script type="text/javascript">
         var ajaxurl = "'. admin_url('admin-ajax.php'). '";
     </script>';
-
-    // 显示成功消息
-    if (get_transient('ws_weibo_success_message')) {
-        echo "<div class='notice notice-success'><p>发布成功！</p></div>";
-        delete_transient('ws_weibo_success_message'); // 消息显示后立刻清除
-    }
-       
 ?>
 <div class="ws-wbwrap">
-        <!-- 左侧边栏 -->
-        <?php if (is_active_sidebar('ws_weibo_feeling_left_sidebar')): ?>
-            <div class="ws-feeling-left-sidebar">
-                <?php dynamic_sidebar('ws_weibo_feeling_left_sidebar'); ?>
-            </div>
-        <?php endif; ?>
+    <!-- 左侧边栏 -->
+    <?php if (is_active_sidebar('ws_weibo_feeling_left_sidebar')): ?>
+        <div class="ws-feeling-left-sidebar">
+            <?php dynamic_sidebar('ws_weibo_feeling_left_sidebar'); ?>
+        </div>
+    <?php endif; ?>
 
     <div class="ws-container">
         <h2><?php echo esc_html($ws_weibo_frontend_title); ?></h2>
@@ -1410,581 +1401,550 @@ function ws_weibo_frontend_page() {
             echo '<div class="ws-weibo-count">微博数量：'. esc_html($weibo_count). '</div>';
             echo '<button class="ws-delete-all-button" data-user-id="'. get_current_user_id(). '">删除全部微博</button>';
             echo '</div>';
-            // AJAX请求处理用JavaScript来实现删除
-            echo '<script>
-                jQuery(document).ready(function ($) {
-                    $(".ws-delete-all-button").click(function (event) {
-                        event.preventDefault();
-                        var $this = $(this);
-                        // 创建自定义提示框元素
-                        var $promptBox = $("<div class=\'ws-delete-all-prompt-box\'>" +
-                            "<p>确定要删除你所有的微博记录吗？</p>" +
-                            "<button class=\'ws-delete-all-confirm-button\'>删除全部</button>" +
-                            "<button class=\'ws-delete-all-cancel-button\'>取消</button>" +
-                            "</div>");
-                        $this.after($promptBox);
-                        // 处理删除全部按钮点击事件
-                        $promptBox.find(".ws-delete-all-confirm-button").click(function () {
-                            var userId = $this.data("user-id");
-                            $.ajax({
-                                url: ajaxurl,
-                                type: "POST",
-                                data: {
-                                    action: "ws_weibo_delete_all_feelings",
-                                    user_id: userId
-                                },
-                                success: function (response) {
-                                    if (response.success) {
-                                        location.reload();
-                                    } else {
-                                        console.log("删除全部微博失败");
-                                    }
-                                },
-                                error: function () {
-                                    console.log("删除全部微博请求出错");
-                                }
-                            });
-                            // 移除提示框
-                            $promptBox.remove();
-                        });
-                        // 处理取消按钮点击事件
-                        $promptBox.find(".ws-delete-all-cancel-button").click(function () {
-                            $promptBox.remove();
-                        });
-                    });
-                });
-            </script>';
         }
-     ?>
-
-
-     <?php
-     // 获取允许发布微博的用户权限设置
-     $allowed_roles = get_option('ws_weibo_allowed_roles', []);
-     // 获取当前登录用户的角色
-     $current_user = wp_get_current_user();
-     $current_user_roles = $current_user->roles;
-     $current_user_role = reset($current_user_roles);
-
-     //获取关闭图片上传
-     $disable_upload_image = isset($settings['disable_upload_image']) ? $settings['disable_upload_image'] : false;
-
-     // 检查当前时间是否在允许发布微博的时间段内
-     if (!ws_weibo_is_within_post_time()) {
-        echo "<div class='ws-unauthorized-message'><p>当前不在发布微博的时间范围呢，请等待开放。</p></div>";
-    } else {
-    // 判断当前用户是否有权限发布微博
-        if (!in_array($current_user_role, $allowed_roles)) {
-        // 获取无权用户发布微博内容提示框的内容
-            $unauthorized_message = get_option('ws_weibo_unauthorized_message', '你没有权限发布微博哦');
-            echo "<div class='ws-unauthorized-message'>$unauthorized_message</div>";
-        } else {
-        // 若在时间范围内且有权限，显示发布表单
-            if (is_user_logged_in()) {
-            // 检查用户是否被禁止发布微博
-                $banned_users = get_option('ws_weibo_banned_users', []);
-                if (in_array(get_current_user_id(), $banned_users)) {
-                    echo "<div class='ws-unauthorized-message'><p>你已被禁止发布微博和评论。</p></div>";
-                } else {
-                    ?>
-
-        <!-- 发布微博表单 -->
-            <form action="" method="post" id="ws-weibo-form">
-                <?php wp_nonce_field('ws_weibo_post_action', 'ws_weibo_post_nonce'); ?>
-                <textarea name="ws_weibo_content" placeholder="发布你的心情..." required></textarea><br>
-
-                <?php if (!$disable_upload_image) : ?>
-                <!-- 图片上传部分 -->
-                <div class="ws-image-upload-container">
-                    <!-- 隐藏浏览器默认文件输入框 -->
-                    <input type="file" id="ws-image-upload" name="ws_images[]" accept=".jpg, .jpeg, .png, .gif, .webp" multiple style="display:none;">
-                    <!-- 自定义按钮触发文件选择 -->
-                    <button type="button" id="ws-select-images-button">选择图片</button>
-                    <button type="button" id="ws-add-more-images" style="display:none;">继续添加</button>
-                    <div id="ws-uploading-message">正在上传中...</div>
-                    <div id="ws_image_message" style="display:none;"></div>
-                    <div id="ws-image-preview-container"></div>
-                </div>
-            <?php endif; ?>
-
-                <input type="submit" name="ws_weibo_submit" value="发布">
-            </form>
-                    <?php
-                }
-            }
-        }
-    }
-    ?>
+        ?>
 
         <?php
-        // 获取每页显示微博的数量
-        $posts_per_page = get_option('ws_weibo_posts_per_page', 20);
+        // 获取允许发布微博的用户权限设置
+        $allowed_roles = get_option('ws_weibo_allowed_roles', []);
+        // 获取当前登录用户的角色
+        $current_user = wp_get_current_user();
+        $current_user_roles = $current_user->roles;
+        $current_user_role = reset($current_user_roles);
 
-        // 获取当前页
-        $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
-        $offset = ($paged - 1) * $posts_per_page;
+        //获取关闭图片上传
+        $disable_upload_image = isset($settings['disable_upload_image']) ? $settings['disable_upload_image'] : false;
 
-        global $wpdb;
-        $table_name = $wpdb->prefix. 'ws_weibo_feelings';
-
-        // 查询微博内容
-        $feelings = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT * FROM $table_name ORDER BY timestamp DESC LIMIT %d, %d",
-                $offset, $posts_per_page
-            )
-        );
-
-        if ($feelings) {
-            foreach ($feelings as $feeling) {
-
-            // 获取微博的评论数量
-                global $wpdb;
-                $comment_count = $wpdb->get_var(
-                    $wpdb->prepare(
-                        "SELECT COUNT(*) FROM {$wpdb->prefix}ws_weibo_comments WHERE feeling_id = %d",
-                        $feeling->id
-                    )
-                );
-
-                // 获取用户信息
-                $user_info = get_userdata($feeling->user_id);
-                $user_name = $user_info? $user_info->display_name : '匿名用户';
-                $user_avatar = get_avatar($feeling->user_id, 40);
-
-                // 获取用户的author页面URL
-                $author_url = get_author_posts_url($feeling->user_id);
-
-                // 微博的HTML结构
-                echo "<div class='ws-feeling' data-feeling-id='". esc_attr($feeling->id). "'>";
-                echo "<div class='ws-user'>";
-                echo "<div class='ws-avatar'>$user_avatar</div>";
-                echo "<div class='ws-username'><a href='". esc_url($author_url). "' target='_blank' style='text-decoration: none;'>". esc_html($user_name). "</a></div>";
-                echo "</div>";
-                echo "<div class='ws-content'>";
-                echo "<p>". ws_weibo_process_content_with_media($feeling->content). "</p>";
-                echo "</div>";
-
-                echo "<div class='ws-like-timestamp-section'>";
-                echo "<div class='ws-like-section' style='cursor: pointer; display: inline-block;'>";
-                echo "&#128077; ";  // 点赞图标
-                echo "<span class='like-count'>". esc_html($feeling->likes_count). " 赞</span>";
-                echo "</div>";
-                echo "<div class='ws-timestamp' style='display: inline-block;'>". esc_html($feeling->timestamp). "</div>";
-
-                if (get_current_user_id() == $feeling->user_id) {
-                    echo '<div class="ws-delete-section" style="display: inline-block; cursor: pointer;">';
-                    echo '<a href="#" class="ws-delete-button" data-id="'. esc_attr($feeling->id). '">删除</a>';
-                    echo '</div>';
-                }
-                echo "</div>";
-
-            // 获取关闭评论设置项的值
-            $close_comments = get_option(ws_weibo_CLOSE_COMMENTS_OPTION, false);
-            if (!$close_comments) {
-
-            // 评论按钮
-            echo "<div class='ws-comment-section' style='cursor: pointer; display: inline-flex; align-items: center;'>";
-            echo "&#128172;";  // 评论图标
-
-            // 如果评论数量大于0，显示评论数量
-            if ($comment_count > 0) {
-            echo "<div class='ws-comment-count' style='margin-left: 5px;'>" . esc_html($comment_count) . "</div>";
-        }
-        echo "</div>";
-
-                // 隐藏的评论输入框和提交按钮
-                echo "<div class='ws-comment-input-section' style='display: none;'>";
-                echo "<textarea class='ws-comment-input' placeholder='输入评论...'></textarea>";
-                echo "<button class='ws-submit-comment'>提交评论</button>";
-                echo "</div>";
-
-                // 评论列表
-                echo "<div class='ws-comment-list' style='display: none;'></div>";
+        // 检查当前时间是否在允许发布微博的时间段内
+        if (!ws_weibo_is_within_post_time()) {
+            echo "<div class='ws-unauthorized-message'><p>当前不在发布微博的时间范围呢，请等待开放。</p></div>";
+        } else {
+            // 判断当前用户是否有权限发布微博
+            if (!in_array($current_user_role, $allowed_roles)) {
+                // 获取无权用户发布微博内容提示框的内容
+                $unauthorized_message = get_option('ws_weibo_unauthorized_message', '你没有权限发布微博哦');
+                echo "<div class='ws-unauthorized-message'>$unauthorized_message</div>";
             } else {
-                // 关闭评论时
-                echo "<style>.ws-comment-section,.ws-comment-input-section,.ws-comment-list { display: none!important; }</style>";
-            }
+                // 若在时间范围内且有权限，显示发布表单
+                if (is_user_logged_in()) {
+                    // 检查用户是否被禁止发布微博
+                    $banned_users = get_option('ws_weibo_banned_users', []);
+                    if (in_array(get_current_user_id(), $banned_users)) {
+                        echo "<div class='ws-unauthorized-message'><p>你已被禁止发布微博和评论。</p></div>";
+                    } else {
+                        ?>
+                        <!-- 发布微博表单 -->
+                        <form id="ws-weibo-form">
+                            <?php wp_nonce_field('ws_weibo_post_action', 'ws_weibo_post_nonce'); ?>
+                            <textarea name="ws_weibo_content" placeholder="发布你的心情..." required></textarea><br>
 
-            echo "</div>";  // 结束每条微博的展示
+                            <?php if (!$disable_upload_image) : ?>
+                                <!-- 图片上传部分 -->
+                                <div class="ws-image-upload-container">
+                                    <!-- 隐藏浏览器默认文件输入框 -->
+                                    <input type="file" id="ws-image-upload" name="ws_images[]" accept=".jpg, .jpeg, .png, .gif, .webp" multiple style="display:none;">
+                                    <!-- 自定义按钮触发文件选择 -->
+                                    <button type="button" id="ws-select-images-button">选择图片</button>
+                                    <button type="button" id="ws-add-more-images" style="display:none;">继续添加</button>
+                                    <div id="ws-uploading-message">正在上传中...</div>
+                                    <div id="ws_image_message" style="display:none;"></div>
+                                    <div id="ws-image-preview-container"></div>
+                                </div>
+                            <?php endif; ?>
 
-          
-            }
-
-            // 显示分页链接
-            $total_feelings = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
-            $total_pages = ceil($total_feelings / $posts_per_page);
-
-            if ($total_pages > 1) {
-            echo '<div class="ws-pagination">';
-            // 首页、上一页、页码、下一页、最后一页
-            if ($paged > 1) {
-                echo '<a href="' . get_pagenum_link(1) . '" class="ws-pagination-link">首页</a>';
-                echo '<a href="' . get_pagenum_link($paged - 1) . '" class="ws-pagination-link">上一页</a>';
-            }
-            for ($i = 1; $i <= $total_pages; $i++) {
-                echo '<a href="' . get_pagenum_link($i) . '" class="' . ($paged == $i ? 'current' : '') . '">' . $i . '</a>';
-            }
-            if ($paged < $total_pages) {
-                echo '<a href="' . get_pagenum_link($paged + 1) . '" class="ws-pagination-link">下一页</a>';
-                echo '<a href="' . get_pagenum_link($total_pages) . '" class="ws-pagination-link">最后一页</a>';
-            }
-            echo '</div>';
-        }
-    } else {
-        echo "<p>暂无心情记录。</p>";
-    }
-
-        // 添加JavaScript代码来处理点赞和删除微博的AJAX请求
- ?>
-        <script>
-            jQuery(document).ready(function ($) {
-                $('.ws-like-section').click(function (event) {
-                    // 点击点赞图标区域触发AJAX请求
-                    if (!$(event.target).closest('.ws-like-section').length) {
-                        return;
+                            <input type="submit" value="发布">
+                        </form>
+                        <?php
                     }
-                    var that = this;  // 保存当前点击元素的this指向
-                    var feelingId = $(this).closest('.ws-feeling').data('feeling-id');  // 通过数据属性获取微博ID
-                    $.ajax({
-                        url: ajaxurl,  // AJAX处理URL
-                        type: 'POST',
-                        data: {
-                            action: 'ws_weibo_handle_like',
-                            feeling_id: feelingId
-                        },
-                        success: function (response) {
-                            if (response.success) {
-                                // 使用保存的that来更新点赞数量
-                                $(that).find('.like-count').text(response.data.likes_count + " 赞");
+                }
+            }
+        }
+        ?>
+
+        <!-- 微博内容区域 -->
+        <div id="ws-feelings-container"></div>
+
+        <!-- 分页导航 -->
+        <div class="ws-pagination" id="ws-pagination"></div>
+
+        <!-- AJAX分页加载的JavaScript -->
+        <script>
+        jQuery(document).ready(function ($) {
+            var currentPage = 1;
+            var postsPerPage = <?php echo get_option('ws_weibo_posts_per_page', 20); ?>;
+            var isLoading = false;
+
+            // 加载微博内容
+            function loadFeelings(page) {
+                if (isLoading) return;
+                isLoading = true;
+
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'ws_weibo_load_feelings',
+                        page: page,
+                        posts_per_page: postsPerPage
+                    },
+                    beforeSend: function() {
+                        $('#ws-feelings-container').append('<div class="ws-loading">加载中...</div>');
+                    },
+                    success: function(response) {
+                        $('.ws-loading').remove();
+                        if (response.success) {
+                            // 清空容器并添加新内容
+                            if (page === 1) {
+                                $('#ws-feelings-container').empty();
                             }
-                        },
-                        error: function () {
-                            console.log('点赞请求出错');
+                            $('#ws-feelings-container').append(response.data.feelings_html);
+                            
+                            // 更新分页导航
+                            updatePagination(response.data.total_pages, page);
+                        } else {
+                            $('#ws-feelings-container').append('<p>暂无心情记录。</p>');
+                            $('#ws-pagination').empty();
+                        }
+                        isLoading = false;
+                    },
+                    error: function() {
+                        $('.ws-loading').remove();
+                        $('#ws-feelings-container').append('<p>加载失败，请重试。</p>');
+                        isLoading = false;
+                    }
+                });
+            }
+
+            // 更新分页导航
+            function updatePagination(totalPages, currentPage) {
+                var paginationHtml = '';
+                if (totalPages > 1) {
+                    // 首页
+                    if (currentPage > 1) {
+                        paginationHtml += '<a href="#" class="ws-pagination-link" data-page="1">首页</a>';
+                        paginationHtml += '<a href="#" class="ws-pagination-link" data-page="' + (currentPage - 1) + '">上一页</a>';
+                    }
+                    // 页码
+                    for (var i = 1; i <= totalPages; i++) {
+                        paginationHtml += '<a href="#" class="' + (currentPage == i ? 'current' : '') + ' ws-pagination-link" data-page="' + i + '">' + i + '</a>';
+                    }
+                    // 下一页、末页
+                    if (currentPage < totalPages) {
+                        paginationHtml += '<a href="#" class="ws-pagination-link" data-page="' + (currentPage + 1) + '">下一页</a>';
+                        paginationHtml += '<a href="#" class="ws-pagination-link" data-page="' + totalPages + '">最后一页</a>';
+                    }
+                }
+                $('#ws-pagination').html(paginationHtml);
+
+                // 绑定分页点击事件
+                $('.ws-pagination-link').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    var page = $(this).data('page');
+                    currentPage = page;
+                    loadFeelings(page);
+                });
+            }
+
+            // 初始加载第一页
+            loadFeelings(currentPage);
+
+            // 图片上传区域
+            var allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];  // 允许的文件格式
+            var maxFileSize = 2 * 1024 * 1024;  // 2MB
+            var imageUrls = []; // 存储已上传的图片URL
+
+            // 点击自定义按钮时触发文件输入框
+            $('#ws-select-images-button').on('click', function() {
+                $('#ws-image-upload').click();  // 触发隐藏的文件输入框
+            });
+
+            // 选择文件后检查文件格式
+            $('#ws-image-upload').on('change', function(event) {
+                var files = event.target.files;
+                if (files.length > 0) {
+                    // 检查文件格式和大小
+                    var invalidFiles = [];
+                    var largeFiles = [];
+                    $.each(files, function(index, file) {
+                        if (!allowedMimeTypes.includes(file.type)) {
+                            invalidFiles.push(file.name);
+                        }
+                        if (file.size > maxFileSize) {
+                            largeFiles.push(file.name);
                         }
                     });
-                });
 
-                // 处理删除单条微博的AJAX请求
-                $('.ws-delete-button').click(function (event) {
-                    event.preventDefault();
-                    var feelingId = $(this).data('id');
-                    var $this = $(this);
-                    // 创建自定义删除提示框元素
-                    var $promptBox = $('<div class="ws-delete-prompt-box">' +
-                        '<p>确定要删除这条微博吗？</p>' +
-                        '<button class="ws-delete-confirm-button">删除</button>' +
-                        '<button class="ws-delete-cancel-button">取消</button>' +
-                        '</div>');
-                    $('body').append($promptBox);
-                    // 处理删除按钮点击事件
-                    $promptBox.find('.ws-delete-confirm-button').click(function () {
-                        $.ajax({
-                            url: ajaxurl,
-                            type: 'POST',
-                            data: {
-                                action: 'ws_weibo_delete_feeling',
-                                feeling_id: feelingId
-                            },
-                            success: function (response) {
-                                if (response.success) {
-                                    // 刷新页面
-                                    location.reload();
-                                } else {
-                                    console.log('删除微博失败');
-                                }
-                            },
-                            error: function () {
-                                console.log('删除微博请求出错');
-                            }
-                        });
-                        // 移除提示框
-                        $promptBox.remove();
-                    });
-                    // 处理取消按钮点击事件
-                    $promptBox.find('.ws-delete-cancel-button').click(function () {
-                        $promptBox.remove();
-                    });
-                });
+                    if (invalidFiles.length > 0) {
+                        $('#ws_image_message').text('不支持的文件格式: ' + invalidFiles.join(', ') + '. 只支持JPG、JPEG、PNG、GIF、WebP格式。').removeClass().addClass('error-message').show();
+                        $('#ws-image-upload').val('');  // 清空选择的文件
+                    } else if (largeFiles.length > 0) {
+                        $('#ws_image_message').text('文件过大: ' + largeFiles.join(', ') + '. 只支持最大2MB的图片。').removeClass().addClass('error-message').show();
+                        $('#ws-image-upload').val('');  // 清空选择的文件
+                    } else {
+                        // 没有无效文件，继续处理图片上传
+                        handleImageUpload(files);
+                    }
+                }
+            });
 
-                // 获取评论
-                $('.ws-comment-section').click(function () {
-                    var feelingId = $(this).closest('.ws-feeling').data('feeling-id');
-                    var $commentInputSection = $(this).next('.ws-comment-input-section');
-                    var $commentSection = $(this).next('.ws-comment-input-section').next('.ws-comment-list');
+            // 继续添加按钮
+            $('#ws-add-more-images').on('click', function() {
+                $('#ws-image-upload').click();
+            });
 
-                    // 切换评论输入框和评论列表的显示状态
-                    $commentInputSection.toggle();  // 切换评论输入框显示
-                    $commentSection.toggle();       // 切换评论列表显示
+            // 图片上传处理函数
+            function handleImageUpload(files) {
+                var formData = new FormData();
+                for (var i = 0; i < files.length; i++) {
+                    formData.append('files[]', files[i]);
+                }
+                formData.append('action', 'ws_weibo_handle_image_upload');
+                formData.append('security', '<?php echo wp_create_nonce("image_upload_nonce"); ?>');
 
+                // 显示“正在上传中”提示
+                $('#ws-uploading-message').show();
 
-                    // 加载评论
-                    if ($commentSection.is(':empty')) {
-                        $.ajax({
-                            url: ajaxurl,
-                            type: 'POST',
-                            data: {
-                                action: 'ws_weibo_load_comments',
-                                feeling_id: feelingId
-                            },
-                            success: function (response) {
-                                if (response.success) {
-                                    var comments = response.data.comments;
-                                    // 清空当前评论列表
-                                    $commentSection.empty();
+                // 清空之前的消息
+                $('#ws_image_message').hide().text('');
 
-                                    // 循环展示已有评论
-                                    comments.forEach(function (comment) {
-                                        var commentTime = new Date(comment.timestamp);
-                                        var formattedTime = commentTime.toLocaleString();  // 格式化时间
+                $.ajax({
+                    url: '<?php echo admin_url('admin-ajax.php'); ?>',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function(response) {
+                        // 隐藏“正在上传中”提示
+                        $('#ws-uploading-message').hide();
 
-                                        $commentSection.append("<div class='ws-comment'>" + comment.content + 
-                                            "<span class='ws-comment-author'> - " + comment.author + "</span>" + 
-                                            "<span class='ws-comment-time'> (" + formattedTime + ")</span></div>");
-                                    });
-                                }
-                            },
-                            error: function () {
-                                console.log('加载评论失败');
-                            }
-                        });
+                        if (response.success) {
+                            response.data.files.forEach(function(file) {
+                                imageUrls.push(file.url);
+                                displayImagePreview(file.url);
+                            });
+                            $('#ws-add-more-images').show();
+                        } else {
+                            $('#ws_image_message').text('图片上传失败: ' + response.data.message).removeClass().addClass('error-message').show();
+                        }
+                    },
+                    error: function() {
+                        // 隐藏“正在上传中”提示
+                        $('#ws-uploading-message').hide();
+                        $('#ws_image_message').text('上传图片时出现错误').removeClass().addClass('error-message').show();
                     }
                 });
+            }
 
+            // 显示图片预览
+            function displayImagePreview(url) {
+                var previewHtml = `
+                <div class="ws-image-preview-item">
+                    <img src="${url}" alt="微心情" class="ws-image-preview" />
+                    <button class="ws-delete-image" onclick="removeImagePreview(this)">×</button>
+                </div>`;
+                $('#ws-image-preview-container').append(previewHtml);
+            }
 
-                // 处理评论
-                $('.ws-submit-comment').click(function () {
-                    var feelingId = $(this).closest('.ws-feeling').data('feeling-id');
-                    var commentContent = $(this).prev('.ws-comment-input').val();
-                    var $submitButton = $(this);
+            // 删除图片预览
+            window.removeImagePreview = function(button) {
+                $(button).closest('.ws-image-preview-item').remove();
+                // 从imageUrls数组中移除已删除图片的URL
+                var index = imageUrls.indexOf($(button).prev().attr('src'));
+                if (index !== -1) {
+                    imageUrls.splice(index, 1);
+                }
+            }
 
-                    // 如果评论内容为空，则不执行后续操作
-                    if (commentContent.trim() === '') {
-                        return;
+            // AJAX 提交微博表单
+            $('#ws-weibo-form').on('submit', function(e) {
+                e.preventDefault();
+
+                var content = $("textarea[name='ws_weibo_content']").val();
+                // 将图片URL添加到内容中
+                imageUrls.forEach(function(url) {
+                    content += `\n${url}`;
+                });
+
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'ws_weibo_handle_frontend_post',
+                        ws_weibo_submit: true,
+                        ws_weibo_content: content,
+                        ws_weibo_post_nonce: $('#ws_weibo_post_nonce').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // 清空表单
+                            $("textarea[name='ws_weibo_content']").val('');
+                            $('#ws-image-preview-container').empty();
+                            imageUrls = [];
+                            $('#ws-add-more-images').hide();
+                            $('#ws_image_message').hide();
+
+                            // 重新加载第一页
+                            currentPage = 1;
+                            loadFeelings(currentPage);
+                        } else {
+                            // 显示错误消息
+                            var $message = $('<div class="ws-message" style="background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 5px; margin-top: 10px;">' + response.data.message + '</div>');
+                            $('#ws-weibo-form').append($message);
+                            setTimeout(function() {
+                                $message.fadeOut(500, function() {
+                                    $(this).remove();
+                                });
+                            }, 2000);
+                        }
+                    },
+                    error: function() {
+                        // 显示错误消息
+                        var $message = $('<div class="ws-message" style="background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 5px; margin-top: 10px;">发布失败，请重试</div>');
+                        $('#ws-weibo-form').append($message);
+                        setTimeout(function() {
+                            $message.fadeOut(500, function() {
+                                $(this).remove();
+                            });
+                        }, 2000);
                     }
+                });
+            });
 
+            // 点赞、删除、评论等事件委托
+            $('#ws-feelings-container').on('click', '.ws-like-section', function(event) {
+                if (!$(event.target).closest('.ws-like-section').length) {
+                    return;
+                }
+                var that = this;
+                var feelingId = $(this).closest('.ws-feeling').data('feeling-id');
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'ws_weibo_handle_like',
+                        feeling_id: feelingId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $(that).find('.like-count').text(response.data.likes_count + " 赞");
+                        }
+                    },
+                    error: function() {
+                        console.log('点赞请求出错');
+                    }
+                });
+            });
+
+            $('#ws-feelings-container').on('click', '.ws-delete-button', function(event) {
+                event.preventDefault();
+                var feelingId = $(this).data('id');
+                var $this = $(this);
+                var $promptBox = $('<div class="ws-delete-prompt-box">' +
+                    '<p>确定要删除这条微博吗？</p>' +
+                    '<button class="ws-delete-confirm-button">删除</button>' +
+                    '<button class="ws-delete-cancel-button">取消</button>' +
+                    '</div>');
+                $('body').append($promptBox);
+                $promptBox.find('.ws-delete-confirm-button').click(function() {
                     $.ajax({
                         url: ajaxurl,
                         type: 'POST',
                         data: {
-                            action: 'ws_weibo_submit_comment',
-                            feeling_id: feelingId,
-                            comment_content: commentContent
+                            action: 'ws_weibo_delete_feeling',
+                            feeling_id: feelingId
                         },
-                        success: function (response) {
+                        success: function(response) {
                             if (response.success) {
-                            // 清空评论输入框
-                                $submitButton.prev('.ws-comment-input').val('');
-                                // 评论成功的提示
-                                var $message = $('<div class="ws-message" style="background-color: #28a745; color: white; padding: 5px 10px; border-radius: 5px; margin-left: 10px; display: inline-block;">评论成功!</div>');
-                                $submitButton.after($message); // 提示消息在按钮旁边
-
-                                // 1秒后移除提示框
-                                setTimeout(function () {
-                                    $message.fadeOut(500, function () {
-                                        $(this).remove();
-                                    });
-                                }, 1000);
-
-                                // 延迟50毫秒后重新加载评论列表
-                                setTimeout(function () {
-                                    var $commentSection = $submitButton.closest('.ws-feeling').find('.ws-comment-list');
-                                    $commentSection.empty(); // 先清空评论列表
-
-                                    // 然后加载最新的评论列表
-                                    $.ajax({
-                                        url: ajaxurl,
-                                        type: 'POST',
-                                        data: {
-                                            action: 'ws_weibo_load_comments',
-                                            feeling_id: feelingId
-                                        },
-                                        success: function (response) {
-                                            if (response.success) {
-                                                var comments = response.data.comments;
-                                                // 循环展示已有评论
-                                                comments.forEach(function (comment) {
-                                                    var commentTime = new Date(comment.timestamp);
-                                                    var formattedTime = commentTime.toLocaleString();  // 格式化时间
-
-                                                    $commentSection.append("<div class='ws-comment'>" + comment.content + 
-                                                        "<span class='ws-comment-author'> - " + comment.author + "</span>" + 
-                                                        "<span class='ws-comment-time'> (" + formattedTime + ")</span></div>");
-                                                });
-                                            }
-                                        },
-                                        error: function () {
-                                            console.log('加载评论失败');
-                                        }
-                                    });
-                                }, 50);
-
-                        // 1秒后更新评论数量
-                        setTimeout(function () {
-                            var $commentCountSection = $submitButton.closest('.ws-feeling').find('.ws-comment-count');
-                            $.ajax({
-                                url: ajaxurl,
-                                type: 'POST',
-                                data: {
-                                    action: 'ws_weibo_get_comment_count',
-                                    feeling_id: feelingId
-                                },
-                                success: function (response) {
-                                    if (response.success) {
-                                        $commentCountSection.text(response.data.comment_count);
-                                    }
-                                },
-                                error: function () {
-                                    console.log('更新评论数量失败');
-                                }
-                            });
-                        }, 1000);                
-            } else {
-                // 失败提交评论后的提示消息
-                var $message = $('<div class="ws-message" style="background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 5px; margin-left: 10px; display: inline-block;">评论失败，请重试</div>');
-                $submitButton.after($message); // 提示消息在按钮旁边
-
-                // 1秒后移除提示框
-                setTimeout(function () {
-                    $message.fadeOut(500, function () {
-                        $(this).remove();
+                                currentPage = 1;
+                                loadFeelings(currentPage);
+                            } else {
+                                console.log('删除微博失败');
+                            }
+                        },
+                        error: function() {
+                            console.log('删除微博请求出错');
+                        }
                     });
-                }, 1000);
-            }
-        },
-        error: function () {
-            // 其他原因导致的错误消息
-            var $message = $('<div class="ws-message" style="background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 5px; margin-left: 10px; display: inline-block;">评论失败，请重试</div>');
-            $submitButton.after($message); // 提示消息在按钮旁边
-
-            // 1秒后移除提示框
-            setTimeout(function () {
-                $message.fadeOut(500, function () {
-                    $(this).remove();
+                    $promptBox.remove();
                 });
-            }, 1000);
-        }
-    });
-});
-        // 图片上传区域
-        var allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];  // 允许的文件格式
-        var maxFileSize = 2 * 1024 * 1024;  // 2MB
-        var imageUrls = []; // 存储已上传的图片URL
-
-        // 点击自定义按钮时触发文件输入框
-        $('#ws-select-images-button').on('click', function() {
-            $('#ws-image-upload').click();  // 触发隐藏的文件输入框
-        });
-
-        // 选择文件后检查文件格式
-        $('#ws-image-upload').on('change', function(event) {
-        var files = event.target.files;
-        if (files.length > 0) {
-            // 检查文件格式和大小
-            var invalidFiles = [];
-            var largeFiles = [];
-            $.each(files, function(index, file) {
-                if (!allowedMimeTypes.includes(file.type)) {
-                    invalidFiles.push(file.name);
-                }
-                if (file.size > maxFileSize) {
-                    largeFiles.push(file.name);
-                }
+                $promptBox.find('.ws-delete-cancel-button').click(function() {
+                    $promptBox.remove();
+                });
             });
 
-            if (invalidFiles.length > 0) {
-                $('#ws_image_message').text('不支持的文件格式: ' + invalidFiles.join(', ') + '. 只支持JPG、JPEG、PNG、GIF、WebP格式。').removeClass().addClass('error-message').show();
-                $('#ws-image-upload').val('');  // 清空选择的文件
-            } else if (largeFiles.length > 0) {
-                $('#ws_image_message').text('文件过大: ' + largeFiles.join(', ') + '. 只支持最大2MB的图片。').removeClass().addClass('error-message').show();
-                $('#ws-image-upload').val('');  // 清空选择的文件
-            } else {
-                // 没有无效文件，继续处理图片上传
-                handleImageUpload(files);
-            }
-        }
-    });
+            $('#ws-feelings-container').on('click', '.ws-comment-section', function() {
+                var feelingId = $(this).closest('.ws-feeling').data('feeling-id');
+                var $commentInputSection = $(this).next('.ws-comment-input-section');
+                var $commentSection = $(this).next('.ws-comment-input-section').next('.ws-comment-list');
 
-    // 继续添加按钮
-    $('#ws-add-more-images').on('click', function() {
-        $('#ws-image-upload').click();
-    });
+                $commentInputSection.toggle();
+                $commentSection.toggle();
 
-    // 图片上传处理函数
-    function handleImageUpload(files) {
-        var formData = new FormData();
-        for (var i = 0; i < files.length; i++) {
-            formData.append('files[]', files[i]);
-        }
-        formData.append('action', 'ws_weibo_handle_image_upload');
-        formData.append('security', '<?php echo wp_create_nonce("image_upload_nonce"); ?>');
-
-        // 显示“正在上传中”提示
-        $('#ws-uploading-message').show();
-
-        // 清空之前的消息
-        $('#ws_image_message').hide().text('');
-
-        $.ajax({
-            url: '<?php echo admin_url('admin-ajax.php'); ?>',
-            type: 'POST',
-            data: formData,
-            contentType: false,
-            processData: false,
-            success: function(response) {
-                // 隐藏“正在上传中”提示
-                $('#ws-uploading-message').hide();
-
-                if (response.success) {
-                    response.data.files.forEach(function(file) {
-                        imageUrls.push(file.url);
-                        displayImagePreview(file.url);
+                if ($commentSection.is(':empty')) {
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'ws_weibo_load_comments',
+                            feeling_id: feelingId
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                var comments = response.data.comments;
+                                $commentSection.empty();
+                                comments.forEach(function(comment) {
+                                    var commentTime = new Date(comment.timestamp);
+                                    var formattedTime = commentTime.toLocaleString();
+                                    $commentSection.append("<div class='ws-comment'>" + comment.content +
+                                        "<span class='ws-comment-author'> - " + comment.author + "</span>" +
+                                        "<span class='ws-comment-time'> (" + formattedTime + ")</span></div>");
+                                });
+                            }
+                        },
+                        error: function() {
+                            console.log('加载评论失败');
+                        }
                     });
-                    $('#ws-add-more-images').show();
-                } else {
-                    $('#ws_image_message').text('图片上传失败: ' + response.data.message).removeClass().addClass('error-message').show();
                 }
-            },
-            error: function() {
-                // 隐藏“正在上传中”提示
-                $('#ws-uploading-message').hide();
-                $('#ws_image_message').text('上传图片时出现错误').removeClass().addClass('error-message').show();
-            }
-        });
-    }
-
-    // 显示图片预览
-    function displayImagePreview(url) {
-        var previewHtml = `
-        <div class="ws-image-preview-item">
-            <img src="${url}" alt="微心情" class="ws-image-preview" />
-            <button class="ws-delete-image" onclick="removeImagePreview(this)">×</button>
-        </div>`;
-        $('#ws-image-preview-container').append(previewHtml);
-    }
-
-    // 删除图片预览
-    window.removeImagePreview = function(button) {
-        $(button).closest('.ws-image-preview-item').remove();
-        // 从imageUrls数组中移除已删除图片的URL
-        var index = imageUrls.indexOf($(button).prev().attr('src'));
-        if (index !== -1) {
-            imageUrls.splice(index, 1);
-        }
-    }
-    
-    // 提交表单时将图片链接添加到微博内容中
-    $('#ws-weibo-form').on('submit', function() {
-        var content = $("textarea[name='ws_weibo_content']").val();
-        imageUrls.forEach(function(url) {
-            content += `\n${url}`; // 将图片URL添加到微博内容中
             });
-            $("textarea[name='ws_weibo_content']").val(content);
-        });
 
-    });
-</script>
-</div>
+            $('#ws-feelings-container').on('click', '.ws-submit-comment', function() {
+                var feelingId = $(this).closest('.ws-feeling').data('feeling-id');
+                var commentContent = $(this).prev('.ws-comment-input').val();
+                var $submitButton = $(this);
+
+                if (commentContent.trim() === '') {
+                    return;
+                }
+
+                $.ajax({
+                    url: ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'ws_weibo_submit_comment',
+                        feeling_id: feelingId,
+                        comment_content: commentContent
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $submitButton.prev('.ws-comment-input').val('');
+                            var $message = $('<div class="ws-message" style="background-color: #28a745; color: white; padding: 5px 10px; border-radius: 5px; margin-left: 10px; display: inline-block;">评论成功!</div>');
+                            $submitButton.after($message);
+                            setTimeout(function() {
+                                $message.fadeOut(500, function() {
+                                    $(this).remove();
+                                });
+                            }, 1000);
+
+                            setTimeout(function() {
+                                var $commentSection = $submitButton.closest('.ws-feeling').find('.ws-comment-list');
+                                $commentSection.empty();
+                                $.ajax({
+                                    url: ajaxurl,
+                                    type: 'POST',
+                                    data: {
+                                        action: 'ws_weibo_load_comments',
+                                        feeling_id: feelingId
+                                    },
+                                    success: function(response) {
+                                        if (response.success) {
+                                            var comments = response.data.comments;
+                                            comments.forEach(function(comment) {
+                                                var commentTime = new Date(comment.timestamp);
+                                                var formattedTime = commentTime.toLocaleString();
+                                                $commentSection.append("<div class='ws-comment'>" + comment.content +
+                                                    "<span class='ws-comment-author'> - " + comment.author + "</span>" +
+                                                    "<span class='ws-comment-time'> (" + formattedTime + ")</span></div>");
+                                            });
+                                        }
+                                    },
+                                    error: function() {
+                                        console.log('加载评论失败');
+                                    }
+                                });
+                            }, 50);
+
+                            setTimeout(function() {
+                                var $commentCountSection = $submitButton.closest('.ws-feeling').find('.ws-comment-count');
+                                $.ajax({
+                                    url: ajaxurl,
+                                    type: 'POST',
+                                    data: {
+                                        action: 'ws_weibo_get_comment_count',
+                                        feeling_id: feelingId
+                                    },
+                                    success: function(response) {
+                                        if (response.success) {
+                                            $commentCountSection.text(response.data.comment_count);
+                                        }
+                                    },
+                                    error: function() {
+                                        console.log('更新评论数量失败');
+                                    }
+                                });
+                            }, 1000);
+                        } else {
+                            var $message = $('<div class="ws-message" style="background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 5px; margin-left: 10px; display: inline-block;">评论失败，请重试</div>');
+                            $submitButton.after($message);
+                            setTimeout(function() {
+                                $message.fadeOut(500, function() {
+                                    $(this).remove();
+                                });
+                            }, 1000);
+                        }
+                    },
+                    error: function() {
+                        var $message = $('<div class="ws-message" style="background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 5px; margin-left: 10px; display: inline-block;">评论失败，请重试</div>');
+                        $submitButton.after($message);
+                        setTimeout(function() {
+                            $message.fadeOut(500, function() {
+                                $(this).remove();
+                            });
+                        }, 1000);
+                    }
+                });
+            });
+
+            // 删除全部微博
+            $('.ws-delete-all-button').click(function(event) {
+                event.preventDefault();
+                var $this = $(this);
+                var $promptBox = $("<div class='ws-delete-all-prompt-box'>" +
+                    "<p>确定要删除你所有的微博记录吗？</p>" +
+                    "<button class='ws-delete-all-confirm-button'>删除全部</button>" +
+                    "<button class='ws-delete-all-cancel-button'>取消</button>" +
+                    "</div>");
+                $this.after($promptBox);
+                $promptBox.find(".ws-delete-all-confirm-button").click(function() {
+                    var userId = $this.data("user-id");
+                    $.ajax({
+                        url: ajaxurl,
+                        type: "POST",
+                        data: {
+                            action: "ws_weibo_delete_all_feelings",
+                            user_id: userId
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                currentPage = 1;
+                                loadFeelings(currentPage);
+                            } else {
+                                console.log("删除全部微博失败");
+                            }
+                        },
+                        error: function() {
+                            console.log("删除全部微博请求出错");
+                        }
+                    });
+                    $promptBox.remove();
+                });
+                $promptBox.find(".ws-delete-all-cancel-button").click(function() {
+                    $promptBox.remove();
+                });
+            });
+        });
+        </script>
+    </div>
     <!-- 右侧边栏 -->
     <?php if (is_active_sidebar('ws_weibo_feeling_sidebar')): ?>
         <div class="ws-feeling-sidebar">
@@ -1992,12 +1952,10 @@ function ws_weibo_frontend_page() {
         </div>
     <?php endif; ?>
 </div>
-
-    <?php
+<?php
     return ob_get_clean();
 }
 add_shortcode('ws_weibo_feeling', 'ws_weibo_frontend_page');
-
 
 // 处理图片上传的AJAX请求
 function ws_weibo_handle_image_upload() {
@@ -2054,10 +2012,8 @@ function ws_weibo_handle_image_upload() {
 
     wp_send_json_success(['files' => $uploaded_files]);
 }
-
 add_action('wp_ajax_ws_weibo_handle_image_upload', 'ws_weibo_handle_image_upload');
 add_action('wp_ajax_nopriv_ws_weibo_handle_image_upload', 'ws_weibo_handle_image_upload');
-
 
 // 获取用户组发布微博
 function ws_weibo_extend_post_capabilities() {
@@ -2075,9 +2031,9 @@ function ws_weibo_extend_post_capabilities() {
 // 处理前台发布微博
 function ws_weibo_handle_frontend_post() {
     if (isset($_POST['ws_weibo_submit']) && (current_user_can('publish_posts') || ws_weibo_extend_post_capabilities())) {
-        // 验证Nonce
+        // 验证 Nonce
         if (!isset($_POST['ws_weibo_post_nonce']) || !wp_verify_nonce($_POST['ws_weibo_post_nonce'], 'ws_weibo_post_action')) {
-            wp_die('安全检查失败，请重试。');
+            wp_send_json_error(['message' => '安全检查失败，请重试。']);
         }
 
         global $wpdb;
@@ -2086,7 +2042,7 @@ function ws_weibo_handle_frontend_post() {
         // 检查用户是否被禁止发布微博
         $banned_users = get_option('ws_weibo_banned_users', []);
         if (in_array(get_current_user_id(), $banned_users)) {
-            wp_die('你已被禁止发布微博和评论。');
+            wp_send_json_error(['message' => '你已被禁止发布微博和评论。']);
         }
 
         $content = sanitize_textarea_field($_POST['ws_weibo_content']);
@@ -2095,21 +2051,124 @@ function ws_weibo_handle_frontend_post() {
         $content = nl2br($content);
         
         // 插入数据
-        $wpdb->insert($table_name, [
+        $result = $wpdb->insert($table_name, [
             'user_id' => get_current_user_id(),
             'content' => $content,
             'timestamp' => current_time('mysql')
         ]);
 
-        // 设置临时成功消息
-        set_transient('ws_weibo_success_message', true, 30);
-
-        // 重定向回当前页面（清理POST数据）
-        wp_safe_redirect(remove_query_arg(['ws_weibo_message', 'success'], wp_get_referer()));
-        exit;
+        if ($result) {
+            wp_send_json_success(['message' => '微博发布成功']);
+        } else {
+            wp_send_json_error(['message' => '微博发布失败']);
+        }
     }
 }
-add_action('init', 'ws_weibo_handle_frontend_post');
+add_action('wp_ajax_ws_weibo_handle_frontend_post', 'ws_weibo_handle_frontend_post');
+add_action('wp_ajax_nopriv_ws_weibo_handle_frontend_post', 'ws_weibo_handle_frontend_post');
+
+// 处理AJAX加载微博请求
+function ws_weibo_load_feelings() {
+    $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+    $posts_per_page = isset($_POST['posts_per_page']) ? intval($_POST['posts_per_page']) : 20;
+    $offset = ($page - 1) * $posts_per_page;
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'ws_weibo_feelings';
+
+    // 查询微博内容
+    $feelings = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT * FROM $table_name ORDER BY timestamp DESC LIMIT %d, %d",
+            $offset, $posts_per_page
+        )
+    );
+
+    $feelings_html = '';
+
+    if ($feelings) {
+        foreach ($feelings as $feeling) {
+            // 获取微博的评论数量
+            $comment_count = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}ws_weibo_comments WHERE feeling_id = %d",
+                    $feeling->id
+                )
+            );
+
+            // 获取用户信息
+            $user_info = get_userdata($feeling->user_id);
+            $user_name = $user_info ? $user_info->display_name : '匿名用户';
+            $user_avatar = get_avatar($feeling->user_id, 40);
+
+            // 获取用户的author页面URL
+            $author_url = get_author_posts_url($feeling->user_id);
+
+            // 微博的HTML结构
+            $feelings_html .= "<div class='ws-feeling' data-feeling-id='". esc_attr($feeling->id). "'>";
+            $feelings_html .= "<div class='ws-user'>";
+            $feelings_html .= "<div class='ws-avatar'>$user_avatar</div>";
+            $feelings_html .= "<div class='ws-username'><a href='". esc_url($author_url). "' target='_blank' style='text-decoration: none;'>". esc_html($user_name). "</a></div>";
+            $feelings_html .= "</div>";
+            $feelings_html .= "<div class='ws-content'>";
+            $feelings_html .= "<p>". ws_weibo_process_content_with_media($feeling->content). "</p>";
+            $feelings_html .= "</div>";
+
+            $feelings_html .= "<div class='ws-like-timestamp-section'>";
+            $feelings_html .= "<div class='ws-like-section' style='cursor: pointer; display: inline-block;'>";
+            $feelings_html .= "&#128077;";  // 点赞图标
+            $feelings_html .= "<span class='like-count'>". esc_html($feeling->likes_count). " 赞</span>";
+            $feelings_html .= "</div>";
+            $feelings_html .= "<div class='ws-timestamp' style='display: inline-block;'>". esc_html($feeling->timestamp). "</div>";
+
+            if (get_current_user_id() == $feeling->user_id) {
+                $feelings_html .= '<div class="ws-delete-section" style="display: inline-block; cursor: pointer;">';
+                $feelings_html .= '<a href="#" class="ws-delete-button" data-id="'. esc_attr($feeling->id). '">删除</a>';
+                $feelings_html .= '</div>';
+            }
+            $feelings_html .= "</div>";
+
+            // 获取关闭评论设置项的值
+            $close_comments = get_option(ws_weibo_CLOSE_COMMENTS_OPTION, false);
+            if (!$close_comments) {
+                // 评论按钮
+                $feelings_html .= "<div class='ws-comment-section' style='cursor: pointer; display: inline-flex; align-items: center;'>";
+                $feelings_html .= "&#128172;";  // 评论图标
+                // 如果评论数量大于0，显示评论数量
+                if ($comment_count > 0) {
+                    $feelings_html .= "<div class='ws-comment-count' style='margin-left: 5px;'>" . esc_html($comment_count) . "</div>";
+                }
+                $feelings_html .= "</div>";
+
+                // 隐藏的评论输入框和提交按钮
+                $feelings_html .= "<div class='ws-comment-input-section' style='display: none;'>";
+                $feelings_html .= "<textarea class='ws-comment-input' placeholder='输入评论...'></textarea>";
+                $feelings_html .= "<button class='ws-submit-comment'>提交评论</button>";
+                $feelings_html .= "</div>";
+
+                // 评论列表
+                $feelings_html .= "<div class='ws-comment-list' style='display: none;'></div>";
+            } else {
+                $feelings_html .= "<style>.ws-comment-section,.ws-comment-input-section,.ws-comment-list { display: none!important; }</style>";
+            }
+
+            $feelings_html .= "</div>";  // 结束每条微博的展示
+        }
+
+        // 获取总页数
+        $total_feelings = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+        $total_pages = ceil($total_feelings / $posts_per_page);
+
+        wp_send_json_success([
+            'feelings_html' => $feelings_html,
+            'total_pages' => $total_pages
+        ]);
+    } else {
+        wp_send_json_error(['message' => '暂无心情记录']);
+    }
+}
+add_action('wp_ajax_ws_weibo_load_feelings', 'ws_weibo_load_feelings');
+add_action('wp_ajax_nopriv_ws_weibo_load_feelings', 'ws_weibo_load_feelings');
 
 
 // 卸载插件
